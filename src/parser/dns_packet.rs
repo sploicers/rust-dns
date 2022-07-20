@@ -10,7 +10,7 @@ pub struct DnsPacket {
     pub questions: Vec<DnsQuestion>,
     pub answers: Vec<DnsRecord>,
     pub authorities: Vec<DnsRecord>,
-    pub resources: Vec<DnsRecord>,
+    pub additional_records: Vec<DnsRecord>,
 }
 
 impl DnsPacket {
@@ -20,7 +20,7 @@ impl DnsPacket {
             questions: Vec::new(),
             answers: Vec::new(),
             authorities: Vec::new(),
-            resources: Vec::new(),
+            additional_records: Vec::new(),
         }
     }
 
@@ -36,11 +36,11 @@ impl DnsPacket {
         for _ in 0..packet.header.num_answers {
             packet.answers.push(DnsRecord::read(buffer)?);
         }
-        for _ in 0..packet.header.num_authoritative_entries {
+        for _ in 0..packet.header.num_authorities {
             packet.authorities.push(DnsRecord::read(buffer)?);
         }
-        for _ in 0..packet.header.num_resources {
-            packet.resources.push(DnsRecord::read(buffer)?);
+        for _ in 0..packet.header.num_additional {
+            packet.additional_records.push(DnsRecord::read(buffer)?);
         }
 
         Ok(packet)

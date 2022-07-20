@@ -31,8 +31,8 @@ pub struct DnsHeader {
     // lengths of each section (16 bits each)
     pub num_questions: u16,
     pub num_answers: u16,
-    pub num_authoritative_entries: u16,
-    pub num_resources: u16,
+    pub num_authorities: u16,
+    pub num_additional: u16,
 }
 
 impl DnsHeader {
@@ -55,8 +55,8 @@ impl DnsHeader {
 
             num_questions: 0,
             num_answers: 0,
-            num_authoritative_entries: 0,
-            num_resources: 0,
+            num_authorities: 0,
+            num_additional: 0,
         }
     }
 
@@ -83,8 +83,8 @@ impl DnsHeader {
         // read the number of records
         self.num_questions = buffer.read_u16()?;
         self.num_answers = buffer.read_u16()?;
-        self.num_authoritative_entries = buffer.read_u16()?;
-        self.num_resources = buffer.read_u16()?;
+        self.num_authorities = buffer.read_u16()?;
+        self.num_additional = buffer.read_u16()?;
 
         Ok(())
     }
