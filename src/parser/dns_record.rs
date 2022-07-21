@@ -1,7 +1,9 @@
-use std::io::Result;
+use super::parser_result::Result;
 use std::net::Ipv4Addr;
 
-use super::{query_type::QueryType, wrapped_buffer::WrappedBuffer};
+use super::{
+    query_name_parser::QueryNameParser, query_type::QueryType, wrapped_buffer::WrappedBuffer,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[allow(dead_code)]
@@ -20,9 +22,9 @@ pub enum DnsRecord {
 }
 
 impl DnsRecord {
-    pub(crate) fn read(buffer: &mut WrappedBuffer) -> Result<DnsRecord> {
-        let mut domain = String::new();
-        buffer.read_query_name(&mut domain)?;
+    pub(crate) fn read(buffer: &WrappedBuffer) -> Result<DnsRecord> {
+        let domain = String::new();
+        QueryNameParser::from_buffer(buffer, &mut domain)?;
 
         let query_type_num = buffer.read_u16()?;
         let query_type = QueryType::from_u16(query_type_num);

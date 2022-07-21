@@ -1,6 +1,5 @@
 use super::result_code::ResultCode;
 use super::wrapped_buffer::WrappedBuffer;
-use std::io::Result;
 
 #[derive(Clone, Debug)]
 pub struct DnsHeader {
@@ -60,7 +59,7 @@ impl DnsHeader {
         }
     }
 
-    pub(crate) fn read(&mut self, buffer: &mut WrappedBuffer) -> Result<()> {
+    pub(crate) fn read(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
         self.id = buffer.read_u16()?;
 
         let flags = buffer.read_u16()?;

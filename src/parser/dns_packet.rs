@@ -2,7 +2,6 @@ use super::{
     dns_header::DnsHeader, dns_question::DnsQuestion, dns_record::DnsRecord, query_type::QueryType,
     wrapped_buffer::WrappedBuffer,
 };
-use std::io::Result;
 
 #[derive(Clone, Debug)]
 pub struct DnsPacket {
@@ -14,7 +13,7 @@ pub struct DnsPacket {
 }
 
 impl DnsPacket {
-    pub(crate) fn new() -> DnsPacket {
+    fn new() -> DnsPacket {
         DnsPacket {
             header: DnsHeader::new(),
             questions: Vec::new(),
@@ -24,7 +23,7 @@ impl DnsPacket {
         }
     }
 
-    pub fn from_buffer(buffer: &mut WrappedBuffer) -> Result<DnsPacket> {
+    pub fn from_buffer(buffer: &mut WrappedBuffer) -> Result<DnsPacket, String> {
         let mut packet = DnsPacket::new();
         packet.header.read(buffer)?;
 

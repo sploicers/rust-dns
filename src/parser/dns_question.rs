@@ -1,5 +1,7 @@
-use super::{query_type::QueryType, wrapped_buffer::WrappedBuffer};
-use std::io::Result;
+use super::{
+    parser_result::Result, query_name_parser::QueryNameParser, query_type::QueryType,
+    wrapped_buffer::WrappedBuffer,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DnsQuestion {
@@ -13,7 +15,7 @@ impl DnsQuestion {
     }
 
     pub(crate) fn read(&mut self, buffer: &mut WrappedBuffer) -> Result<()> {
-        buffer.read_query_name(&mut self.name)?;
+        QueryNameParser::from_buffer(buffer, &mut self.name)?;
         self.query_type = QueryType::from_u16(buffer.read_u16()?);
         buffer.read_u16()?;
         Ok(())
