@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use super::{
     dns_header::DnsHeader, dns_question::DnsQuestion, dns_record::DnsRecord, query_type::QueryType,
     wrapped_buffer::WrappedBuffer,
@@ -43,5 +45,25 @@ impl DnsPacket {
         }
 
         Ok(packet)
+    }
+}
+
+impl Display for DnsPacket {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(formatter, "{:#?}", self.header)?;
+
+        for q in &self.questions {
+            writeln!(formatter, "{:#?}", *q)?;
+        }
+        for answer in &self.answers {
+            writeln!(formatter, "{:#?}", answer)?;
+        }
+        for authority in &self.authorities {
+            writeln!(formatter, "{:#?}", authority)?;
+        }
+        for record in &self.additional_records {
+            writeln!(formatter, "{:#?}", record)?;
+        }
+        Ok(())
     }
 }
