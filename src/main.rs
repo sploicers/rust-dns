@@ -11,7 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     file.read(&mut buffer.buf)?;
 
     if let Ok(packet) = DnsPacket::from_buffer(&mut buffer) {
-        print!("{:?}", packet.header);
+        print!("{:?}", packet);
     }
     Ok(())
 }

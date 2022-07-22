@@ -3,6 +3,7 @@ mod dns_packet;
 mod dns_question;
 mod dns_record;
 
+mod bitshifting;
 mod query_name_parser;
 mod query_type;
 mod result_code;

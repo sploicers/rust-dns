@@ -1,3 +1,4 @@
+use super::bitshifting::{get_flag, get_lsb, get_lsn, get_msb};
 use super::result_code::ResultCode;
 use super::wrapped_buffer::WrappedBuffer;
 
@@ -36,7 +37,7 @@ pub struct DnsHeader {
 
 impl DnsHeader {
     // initialize "empty" representation with all default values
-    pub(crate) fn new() -> DnsHeader {
+    pub fn new() -> DnsHeader {
         DnsHeader {
             id: 0,
 
@@ -59,7 +60,7 @@ impl DnsHeader {
         }
     }
 
-    pub(crate) fn read(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
+    pub fn read(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
         self.id = buffer.read_u16()?;
 
         let flags = buffer.read_u16()?;
@@ -87,24 +88,4 @@ impl DnsHeader {
 
         Ok(())
     }
-}
-
-// least-significant byte
-fn get_lsb(val: u16) -> u8 {
-    (val & 0xFF) as u8
-}
-
-// most-significant byte
-fn get_msb(val: u16) -> u8 {
-    (val >> 8) as u8
-}
-
-// low/least-significant nibble (still u8 because Rust has no inbuilt u4)
-fn get_lsn(val: u8) -> u8 {
-    val & 0x0F
-}
-
-// is nth bit set?
-fn get_flag(flags: u8, pos: u8) -> bool {
-    (flags & (1 << pos)) == 1
 }

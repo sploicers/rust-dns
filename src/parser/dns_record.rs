@@ -1,7 +1,10 @@
 use std::net::Ipv4Addr;
 
 use super::{
-    query_name_parser::{QueryNameParser, QueryName}, query_type::QueryType, wrapped_buffer::WrappedBuffer,
+    bitshifting::get_nth_octal,
+    query_name_parser::{QueryName, QueryNameParser},
+    query_type::QueryType,
+    wrapped_buffer::WrappedBuffer,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -21,7 +24,7 @@ pub enum DnsRecord {
 }
 
 impl DnsRecord {
-    pub(crate) fn read(buffer: &mut WrappedBuffer) -> Result<DnsRecord, String> {
+    pub fn read(buffer: &mut WrappedBuffer) -> Result<DnsRecord, String> {
         let mut domain = String::new();
         QueryName::from_buffer(buffer, &mut domain)?;
 
@@ -36,10 +39,10 @@ impl DnsRecord {
             QueryType::A => {
                 let raw_address = buffer.read_u32()?;
                 let address = Ipv4Addr::new(
-                    ((raw_address >> 24) & 0xFF) as u8,
-                    ((raw_address >> 24) & 0xFF) as u8,
-                    ((raw_address >> 24) & 0xFF) as u8,
-                    ((raw_address >> 24) & 0xFF) as u8,
+                    get_nth_octal(raw_address, 1),
+                    get_nth_octal(raw_address, 2),
+                    get_nth_octal(raw_address, 3),
+                    get_nth_octal(raw_address, 4),
                 );
                 Ok(DnsRecord::A {
                     domain,
