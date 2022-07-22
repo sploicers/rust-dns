@@ -1,7 +1,9 @@
-use super::{parser_result::Result, WrappedBuffer};
+use super::WrappedBuffer;
+
+pub struct QueryName{}
 
 pub trait QueryNameParser {
-    fn from_buffer(buffer: &WrappedBuffer, result: &mut String) -> Result<()> {
+    fn from_buffer(buffer: &mut WrappedBuffer, result: &mut String) -> Result<(), String> {
         let mut local_pos = buffer.pos();
         let mut delimiter = "";
         let mut have_jumped = false;
@@ -61,3 +63,5 @@ pub trait QueryNameParser {
         Ok(())
     }
 }
+
+impl QueryNameParser for QueryName {}
