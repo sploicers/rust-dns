@@ -1,18 +1,15 @@
 mod parser;
 
 use parser::DnsPacket;
-use std::fs::File;
+use std::{error::Error, fs::File, io::Read};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     let mut filename = String::new();
-
-    if got_filename_from_args(&mut filename) {
-        print!("Reading packet from file: {}.\n\n", filename);
-        print!("{}", DnsPacket::from(&mut File::open(filename)?)?);
-    } else {
-        print!("Reading packet from standard input.\n\n");
-        print!("{}", DnsPacket::from(&mut std::io::stdin().lock())?);
-    }
+    let mut reader: Box<dyn Read> = match got_filename_from_args(&mut filename) {
+        true => Box::new(File::open(filename)?),
+        false => Box::new(std::io::stdin().lock()),
+    };
+    print!("{}", DnsPacket::from_reader(&mut reader)?);
     Ok(())
 }
 

@@ -62,12 +62,16 @@ impl DnsHeader {
 
     pub fn read(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
         self.id = buffer.read_u16()?;
+        self.read_flags(buffer)?;
+        self.read_record_counts(buffer)?;
+        Ok(())
+    }
 
+    fn read_flags(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
         let flags = buffer.read_u16()?;
         let most_significant_byte = get_msb(flags);
         let least_significant_byte = get_lsb(flags);
 
-        // read flags
         self.recursion_desired = get_flag(most_significant_byte, 0);
         self.truncated_message = get_flag(most_significant_byte, 1);
         self.authoritative_answer = get_flag(most_significant_byte, 2);
@@ -79,13 +83,14 @@ impl DnsHeader {
         self.authed_data = get_flag(least_significant_byte, 5);
         self.z = get_flag(least_significant_byte, 6);
         self.recursion_available = get_flag(least_significant_byte, 7);
+        Ok(())
+    }
 
-        // read the number of records
+    fn read_record_counts(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
         self.num_questions = buffer.read_u16()?;
         self.num_answers = buffer.read_u16()?;
         self.num_authorities = buffer.read_u16()?;
         self.num_additional = buffer.read_u16()?;
-
         Ok(())
     }
 }

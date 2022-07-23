@@ -1,5 +1,3 @@
-use std::result;
-
 pub struct WrappedBuffer {
     pub buf: [u8; 512],
     pos: usize,
@@ -13,7 +11,7 @@ impl WrappedBuffer {
         }
     }
 
-    pub fn read_u8(&mut self) -> result::Result<u8, String> {
+    pub fn read_u8(&mut self) -> Result<u8, String> {
         if self.pos > 512 {
             return Err("End of buffer!".into());
         }
@@ -22,15 +20,15 @@ impl WrappedBuffer {
         Ok(result)
     }
 
-    pub fn read_u16(&mut self) -> result::Result<u16, String> {
+    pub fn read_u16(&mut self) -> Result<u16, String> {
         Ok((self.read_u8()? as u16) << 8 | self.read_u8()? as u16)
     }
 
-    pub fn read_u32(&mut self) -> result::Result<u32, String> {
+    pub fn read_u32(&mut self) -> Result<u32, String> {
         Ok((self.read_u16()? as u32) << 16 | self.read_u16()? as u32)
     }
 
-    pub fn get_slice(&self, start: usize, len: usize) -> result::Result<&[u8], String> {
+    pub fn get_slice(&self, start: usize, len: usize) -> Result<&[u8], String> {
         if start + len >= 512 {
             return Err("End of buffer!".into());
         }
@@ -38,7 +36,7 @@ impl WrappedBuffer {
         Ok(&self.buf[start..end])
     }
 
-    pub fn advance(&mut self, num_steps: usize) -> result::Result<(), String> {
+    pub fn advance(&mut self, num_steps: usize) -> Result<(), String> {
         self.pos += num_steps;
         Ok(())
     }

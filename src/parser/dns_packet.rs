@@ -1,4 +1,4 @@
-use std::{fmt::Display, io::Read};
+use std::{error::Error, fmt::Display, io::Read};
 
 use super::{
     dns_header::DnsHeader, dns_question::DnsQuestion, dns_record::DnsRecord, query_type::QueryType,
@@ -25,7 +25,7 @@ impl DnsPacket {
         }
     }
 
-    pub fn from(reader: &mut dyn Read) -> Result<DnsPacket, Box<dyn std::error::Error>> {
+    pub fn from_reader(reader: &mut dyn Read) -> Result<DnsPacket, Box<dyn Error>> {
         let mut buffer = WrappedBuffer::new();
         reader.read(&mut buffer.buf)?;
         Ok(DnsPacket::from_buffer(&mut buffer)?)
@@ -49,7 +49,6 @@ impl DnsPacket {
         for _ in 0..packet.header.num_additional {
             packet.additional_records.push(DnsRecord::read(buffer)?);
         }
-
         Ok(packet)
     }
 }
