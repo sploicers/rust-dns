@@ -92,15 +92,11 @@ mod tests {
         todo!("Need to create a packet exhibiting this scenario in a hex editor or something.");
     }
 
-    fn get_file_handle(filename: String) -> Result<File, Box<dyn Error>> {
-        let result = File::open(format!(
+    fn get_file_handle(filename: String) -> std::io::Result<File> {
+        File::open(format!(
             "{}/test_data/{}",
-            std::env::var("CARGO_MANIFEST_DIR")?,
+            std::env::var("CARGO_MANIFEST_DIR").unwrap(),
             filename
-        ));
-        match result {
-            Ok(file) => Ok(file),
-            _ => Err("Failed to open file".into()),
-        }
+        ))
     }
 }
