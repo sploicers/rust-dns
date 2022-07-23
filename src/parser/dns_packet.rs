@@ -1,4 +1,4 @@
-use std::{fmt::Display, fs::File, io::Read};
+use std::{fmt::Display, io::Read};
 
 use super::{
     dns_header::DnsHeader, dns_question::DnsQuestion, dns_record::DnsRecord, query_type::QueryType,
@@ -25,16 +25,9 @@ impl DnsPacket {
         }
     }
 
-    pub fn from_file(mut file: File) -> Result<DnsPacket, Box<dyn std::error::Error>> {
+    pub fn from(reader: &mut dyn Read) -> Result<DnsPacket, Box<dyn std::error::Error>> {
         let mut buffer = WrappedBuffer::new();
-        file.read(&mut buffer.buf)?;
-        Ok(DnsPacket::from_buffer(&mut buffer)?)
-    }
-
-    pub fn from_stdin() -> Result<DnsPacket, Box<dyn std::error::Error>> {
-        let mut buffer = WrappedBuffer::new();
-        let mut stdin = std::io::stdin();
-        stdin.read(&mut buffer.buf)?;
+        reader.read(&mut buffer.buf)?;
         Ok(DnsPacket::from_buffer(&mut buffer)?)
     }
 
@@ -65,8 +58,8 @@ impl Display for DnsPacket {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(formatter, "{:#?}", self.header)?;
 
-        for q in &self.questions {
-            writeln!(formatter, "{:#?}", *q)?;
+        for question in &self.questions {
+            writeln!(formatter, "{:#?}", question)?;
         }
         for answer in &self.answers {
             writeln!(formatter, "{:#?}", answer)?;
