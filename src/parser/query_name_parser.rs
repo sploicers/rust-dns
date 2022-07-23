@@ -64,3 +64,43 @@ pub trait QueryNameParser {
 }
 
 impl QueryNameParser for QueryName {}
+
+#[cfg(test)]
+mod tests {
+    use super::{QueryName, QueryNameParser, WrappedBuffer};
+    use std::{error::Error, fs::File, io::Read};
+
+    const HEADER_SIZE: usize = 12;
+
+    #[test]
+    fn extracts_domain_name_successfully() -> Result<(), Box<dyn Error>> {
+        let mut buffer = WrappedBuffer::new();
+        let mut file = get_file_handle(String::from("google_query.txt"))?;
+        let mut domain_name = String::new();
+        let expected_domain_name = String::from("google.com");
+
+        file.read(&mut buffer.raw_buffer)?;
+        buffer.seek(HEADER_SIZE)?; // Advance the buffer past the header to the beginning of the question section.
+        QueryName::from_buffer(&mut buffer, &mut domain_name)?;
+
+        assert_eq!(domain_name, expected_domain_name);
+        Ok(())
+    }
+
+    #[test]
+    fn parsing_fails_for_packet_with_too_many_jumps() -> Result<(), Box<dyn Error>> {
+        todo!("Need to create a packet exhibiting this scenario in a hex editor or something.");
+    }
+
+    fn get_file_handle(filename: String) -> Result<File, Box<dyn Error>> {
+        let result = File::open(format!(
+            "{}/test_data/{}",
+            std::env::var("CARGO_MANIFEST_DIR")?,
+            filename
+        ));
+        match result {
+            Ok(file) => Ok(file),
+            _ => Err("Failed to open file".into()),
+        }
+    }
+}

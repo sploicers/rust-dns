@@ -22,8 +22,8 @@ pub struct DnsHeader {
     // 1 bit
     pub checking_disabled: bool,
     // 1 bit
-    pub authed_data: bool,
-    // reserved (1 bit)
+    pub authentic_data: bool,
+    // 1 bit - reserved
     pub z: bool,
     // 1 bit - does the server allow/support recursive lookup?
     pub recursion_available: bool,
@@ -49,7 +49,7 @@ impl DnsHeader {
 
             rescode: ResultCode::NOERROR,
             checking_disabled: false,
-            authed_data: false,
+            authentic_data: false,
             z: false,
             recursion_available: false,
 
@@ -80,7 +80,7 @@ impl DnsHeader {
 
         self.rescode = ResultCode::from_number(least_significant_byte);
         self.checking_disabled = get_flag(least_significant_byte, 4);
-        self.authed_data = get_flag(least_significant_byte, 5);
+        self.authentic_data = get_flag(least_significant_byte, 5);
         self.z = get_flag(least_significant_byte, 6);
         self.recursion_available = get_flag(least_significant_byte, 7);
         Ok(())

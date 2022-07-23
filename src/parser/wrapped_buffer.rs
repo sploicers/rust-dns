@@ -59,3 +59,42 @@ impl WrappedBuffer {
         self.position
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::error::Error;
+
+    use super::{WrappedBuffer, BUFFER_SIZE};
+
+    #[test]
+    fn reading_fails_on_buffer_overrun() -> Result<(), Box<dyn Error>> {
+        let mut buffer = WrappedBuffer::new();
+        buffer.seek(BUFFER_SIZE)?;
+
+        assert_buffer_overrun(buffer.read_u8())?;
+        assert_buffer_overrun(buffer.read_u16())?;
+        assert_buffer_overrun(buffer.read_u32())?;
+        Ok(())
+    }
+
+    #[test]
+    fn peek_fails_on_buffer_overrun() -> Result<(), Box<dyn Error>> {
+        let buffer = WrappedBuffer::new();
+        assert_buffer_overrun(buffer.peek(BUFFER_SIZE))?;
+        Ok(())
+    }
+
+    #[test]
+    fn get_slice_fails_on_buffer_overrun() -> Result<(), Box<dyn Error>> {
+        let buffer = WrappedBuffer::new();
+        assert_buffer_overrun(buffer.get_slice(BUFFER_SIZE / 2, BUFFER_SIZE / 2 + 1))?;
+        Ok(())
+    }
+
+    fn assert_buffer_overrun<T>(result: Result<T, String>) -> Result<(), Box<dyn Error>> {
+        match result {
+            Err(_) => Ok(()),
+            _ => panic!("Buffer overrun error expected."),
+        }
+    }
+}
