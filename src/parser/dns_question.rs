@@ -1,5 +1,6 @@
 use super::{
-    query_name_parser::{QueryNameParser, QueryName}, query_type::QueryType,
+    query_name_parser::{QueryName, QueryNameParser},
+    query_type::QueryType,
     wrapped_buffer::WrappedBuffer,
 };
 

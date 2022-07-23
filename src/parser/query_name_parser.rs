@@ -40,7 +40,6 @@ pub trait QueryNameParser {
                 local_pos = jump_destination_pos;
                 have_jumped = true;
                 num_jumps += 1;
-                continue;
             } else {
                 local_pos += 1;
 

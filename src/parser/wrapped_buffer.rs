@@ -1,22 +1,22 @@
 pub struct WrappedBuffer {
-    pub buf: [u8; 512],
-    pos: usize,
+    pub raw_buffer: [u8; 512],
+    position: usize,
 }
 
 impl WrappedBuffer {
     pub fn new() -> WrappedBuffer {
         WrappedBuffer {
-            buf: [0; 512],
-            pos: 0,
+            raw_buffer: [0; 512],
+            position: 0,
         }
     }
 
     pub fn read_u8(&mut self) -> Result<u8, String> {
-        if self.pos > 512 {
+        if self.position > 512 {
             return Err("End of buffer!".into());
         }
-        let result: u8 = self.buf[self.pos];
-        self.pos += 1;
+        let result: u8 = self.raw_buffer[self.position];
+        self.position += 1;
         Ok(result)
     }
 
@@ -33,16 +33,16 @@ impl WrappedBuffer {
             return Err("End of buffer!".into());
         }
         let end = start + len;
-        Ok(&self.buf[start..end])
+        Ok(&self.raw_buffer[start..end])
     }
 
     pub fn advance(&mut self, num_steps: usize) -> Result<(), String> {
-        self.pos += num_steps;
+        self.position += num_steps;
         Ok(())
     }
 
     pub fn seek(&mut self, pos: usize) -> Result<(), String> {
-        self.pos = pos;
+        self.position = pos;
         Ok(())
     }
 
@@ -50,10 +50,10 @@ impl WrappedBuffer {
         if pos >= 512 {
             return Err("End of buffer!".into());
         }
-        Ok(self.buf[pos])
+        Ok(self.raw_buffer[pos])
     }
 
     pub fn pos(&self) -> usize {
-        self.pos
+        self.position
     }
 }
