@@ -89,6 +89,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn parsing_fails_for_packet_with_too_many_jumps() -> Result<(), Box<dyn Error>> {
         todo!("Need to create a packet exhibiting this scenario in a hex editor or something.");
     }
