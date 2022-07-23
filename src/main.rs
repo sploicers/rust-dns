@@ -5,10 +5,13 @@ use std::{error::Error, fs::File, io::Read};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut filename = String::new();
-    let mut reader: Box<dyn Read> = match got_filename_from_args(&mut filename) {
-        true => Box::new(File::open(filename)?),
-        false => Box::new(std::io::stdin().lock()),
+
+    let mut reader: Box<dyn Read> = if got_filename_from_args(&mut filename) {
+        Box::new(File::open(filename)?)
+    } else {
+        Box::new(std::io::stdin().lock())
     };
+
     print!("{}", DnsPacket::from_reader(&mut reader)?);
     Ok(())
 }
