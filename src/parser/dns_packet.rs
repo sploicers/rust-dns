@@ -1,7 +1,7 @@
 use std::{error::Error, fmt::Display, io::Read};
 
 use super::{
-    dns_header::DnsHeader, dns_question::DnsQuestion, dns_record::DnsRecord, query_type::QueryType,
+    dns_header::DnsHeader, dns_question::DnsQuestion, dns_record::DnsRecord,
     wrapped_buffer::WrappedBuffer,
 };
 
@@ -36,9 +36,7 @@ impl DnsPacket {
         packet.header.read(buffer)?;
 
         for _ in 0..packet.header.num_questions {
-            let mut question = DnsQuestion::new("".into(), QueryType::UNKNOWN(0));
-            question.read(buffer)?;
-            packet.questions.push(question);
+            packet.questions.push(DnsQuestion::read(buffer)?);
         }
         for _ in 0..packet.header.num_answers {
             packet.answers.push(DnsRecord::read(buffer)?);

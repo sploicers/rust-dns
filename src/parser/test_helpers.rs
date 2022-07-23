@@ -1,6 +1,7 @@
 use std::{error::Error, fs::File};
 
 const TEST_DATA_DIR: &str = "test_data";
+pub const HEADER_SIZE: usize = 12;
 
 pub fn open_test_file(filename: String) -> std::io::Result<File> {
     File::open(format!(

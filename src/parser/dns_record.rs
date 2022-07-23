@@ -26,7 +26,7 @@ pub enum DnsRecord {
 impl DnsRecord {
     pub fn read(buffer: &mut WrappedBuffer) -> Result<DnsRecord, String> {
         let mut domain = String::new();
-        QueryName::from_buffer(buffer, &mut domain)?;
+        QueryName::read(buffer, &mut domain)?;
 
         let query_type_num = buffer.read_u16()?;
         let query_type = QueryType::from_u16(query_type_num);

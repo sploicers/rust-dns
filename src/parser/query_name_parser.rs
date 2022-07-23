@@ -3,7 +3,7 @@ use super::wrapped_buffer::WrappedBuffer;
 pub struct QueryName {}
 
 pub trait QueryNameParser {
-    fn from_buffer(buffer: &mut WrappedBuffer, result: &mut String) -> Result<(), String> {
+    fn read(buffer: &mut WrappedBuffer, result: &mut String) -> Result<(), String> {
         let mut local_pos = buffer.pos();
         let mut delimiter = "";
         let mut have_jumped = false;
@@ -68,13 +68,11 @@ impl QueryNameParser for QueryName {}
 #[cfg(test)]
 mod tests {
     use super::{QueryName, QueryNameParser, WrappedBuffer};
-    use crate::parser::test_helpers::open_test_file;
+    use crate::parser::test_helpers::{open_test_file, HEADER_SIZE};
     use std::{error::Error, io::Read};
 
-    const HEADER_SIZE: usize = 12;
-
     #[test]
-    fn extracts_domain_name_successfully() -> Result<(), Box<dyn Error>> {
+    fn reads_domain_name_successfully() -> Result<(), Box<dyn Error>> {
         let mut buffer = WrappedBuffer::new();
         let mut file = open_test_file(String::from("google_query.txt"))?;
         let mut domain_name = String::new();
@@ -82,15 +80,15 @@ mod tests {
 
         file.read(&mut buffer.raw_buffer)?;
         buffer.seek(HEADER_SIZE)?; // Advance the buffer past the header to the beginning of the question section.
-        QueryName::from_buffer(&mut buffer, &mut domain_name)?;
+        QueryName::read(&mut buffer, &mut domain_name)?;
 
         assert_eq!(domain_name, expected_domain_name);
         Ok(())
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "Need to create a packet exhibiting this scenario in a hex editor or something."]
     fn parsing_fails_for_packet_with_too_many_jumps() -> Result<(), Box<dyn Error>> {
-        todo!("Need to create a packet exhibiting this scenario in a hex editor or something.");
+        todo!();
     }
 }
