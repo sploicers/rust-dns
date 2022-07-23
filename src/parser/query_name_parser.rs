@@ -68,14 +68,15 @@ impl QueryNameParser for QueryName {}
 #[cfg(test)]
 mod tests {
     use super::{QueryName, QueryNameParser, WrappedBuffer};
-    use std::{error::Error, fs::File, io::Read};
+    use crate::parser::test_helpers::open_test_file;
+    use std::{error::Error, io::Read};
 
     const HEADER_SIZE: usize = 12;
 
     #[test]
     fn extracts_domain_name_successfully() -> Result<(), Box<dyn Error>> {
         let mut buffer = WrappedBuffer::new();
-        let mut file = get_file_handle(String::from("google_query.txt"))?;
+        let mut file = open_test_file(String::from("google_query.txt"))?;
         let mut domain_name = String::new();
         let expected_domain_name = String::from("google.com");
 
@@ -90,13 +91,5 @@ mod tests {
     #[test]
     fn parsing_fails_for_packet_with_too_many_jumps() -> Result<(), Box<dyn Error>> {
         todo!("Need to create a packet exhibiting this scenario in a hex editor or something.");
-    }
-
-    fn get_file_handle(filename: String) -> std::io::Result<File> {
-        File::open(format!(
-            "{}/test_data/{}",
-            std::env::var("CARGO_MANIFEST_DIR").unwrap(),
-            filename
-        ))
     }
 }

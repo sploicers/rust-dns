@@ -7,6 +7,7 @@ mod bitshifting;
 mod query_name_parser;
 mod query_type;
 mod result_code;
+mod test_helpers;
 mod wrapped_buffer;
 
 pub use dns_packet::DnsPacket;

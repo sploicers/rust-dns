@@ -62,39 +62,37 @@ impl WrappedBuffer {
 
 #[cfg(test)]
 mod tests {
+    use super::{WrappedBuffer, BUFFER_SIZE};
+    use crate::parser::test_helpers::expect_error;
     use std::error::Error;
 
-    use super::{WrappedBuffer, BUFFER_SIZE};
+    const BUFFER_OVERRUN_MESSAGE: &str = "Expected buffer overrun.";
 
     #[test]
     fn reading_fails_on_buffer_overrun() -> Result<(), Box<dyn Error>> {
         let mut buffer = WrappedBuffer::new();
         buffer.seek(BUFFER_SIZE)?;
 
-        assert_buffer_overrun(buffer.read_u8())?;
-        assert_buffer_overrun(buffer.read_u16())?;
-        assert_buffer_overrun(buffer.read_u32())?;
+        expect_error(buffer.read_u8(), BUFFER_OVERRUN_MESSAGE)?;
+        expect_error(buffer.read_u16(), BUFFER_OVERRUN_MESSAGE)?;
+        expect_error(buffer.read_u32(), BUFFER_OVERRUN_MESSAGE)?;
         Ok(())
     }
 
     #[test]
     fn peek_fails_on_buffer_overrun() -> Result<(), Box<dyn Error>> {
         let buffer = WrappedBuffer::new();
-        assert_buffer_overrun(buffer.peek(BUFFER_SIZE))?;
+        expect_error(buffer.peek(BUFFER_SIZE), BUFFER_OVERRUN_MESSAGE)?;
         Ok(())
     }
 
     #[test]
     fn get_slice_fails_on_buffer_overrun() -> Result<(), Box<dyn Error>> {
         let buffer = WrappedBuffer::new();
-        assert_buffer_overrun(buffer.get_slice(BUFFER_SIZE / 2, BUFFER_SIZE / 2 + 1))?;
+        expect_error(
+            buffer.get_slice(BUFFER_SIZE / 2, BUFFER_SIZE / 2 + 1),
+            BUFFER_OVERRUN_MESSAGE,
+        )?;
         Ok(())
-    }
-
-    fn assert_buffer_overrun<T>(result: Result<T, String>) -> Result<(), Box<dyn Error>> {
-        match result {
-            Err(_) => Ok(()),
-            _ => panic!("Buffer overrun error expected."),
-        }
     }
 }
