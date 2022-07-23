@@ -12,4 +12,3 @@ mod wrapped_buffer;
 pub use dns_packet::DnsPacket;
 pub use query_type::QueryType;
 pub use result_code::ResultCode;
-pub use wrapped_buffer::WrappedBuffer;

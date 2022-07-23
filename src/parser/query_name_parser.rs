@@ -1,6 +1,6 @@
-use super::WrappedBuffer;
+use super::wrapped_buffer::WrappedBuffer;
 
-pub struct QueryName{}
+pub struct QueryName {}
 
 pub trait QueryNameParser {
     fn from_buffer(buffer: &mut WrappedBuffer, result: &mut String) -> Result<(), String> {

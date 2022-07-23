@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, fs::File, io::Read};
 
 use super::{
     dns_header::DnsHeader, dns_question::DnsQuestion, dns_record::DnsRecord, query_type::QueryType,
@@ -25,7 +25,20 @@ impl DnsPacket {
         }
     }
 
-    pub fn from_buffer(buffer: &mut WrappedBuffer) -> Result<DnsPacket, String> {
+    pub fn from_file(mut file: File) -> Result<DnsPacket, Box<dyn std::error::Error>> {
+        let mut buffer = WrappedBuffer::new();
+        file.read(&mut buffer.buf)?;
+        Ok(DnsPacket::from_buffer(&mut buffer)?)
+    }
+
+    pub fn from_stdin() -> Result<DnsPacket, Box<dyn std::error::Error>> {
+        let mut buffer = WrappedBuffer::new();
+        let mut stdin = std::io::stdin();
+        stdin.read(&mut buffer.buf)?;
+        Ok(DnsPacket::from_buffer(&mut buffer)?)
+    }
+
+    fn from_buffer(buffer: &mut WrappedBuffer) -> Result<DnsPacket, String> {
         let mut packet = DnsPacket::new();
         packet.header.read(buffer)?;
 
