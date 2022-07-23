@@ -14,7 +14,7 @@ impl WrappedBuffer {
     }
 
     pub fn read_u8(&mut self) -> Result<u8, String> {
-        if self.position > BUFFER_SIZE {
+        if self.position >= BUFFER_SIZE {
             return Err("End of buffer!".into());
         }
         let result: u8 = self.raw_buffer[self.position];
