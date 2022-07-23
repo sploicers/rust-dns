@@ -1,18 +1,20 @@
+const BUFFER_SIZE: usize = 512;
+
 pub struct WrappedBuffer {
-    pub raw_buffer: [u8; 512],
+    pub raw_buffer: [u8; BUFFER_SIZE],
     position: usize,
 }
 
 impl WrappedBuffer {
     pub fn new() -> WrappedBuffer {
         WrappedBuffer {
-            raw_buffer: [0; 512],
+            raw_buffer: [0; BUFFER_SIZE],
             position: 0,
         }
     }
 
     pub fn read_u8(&mut self) -> Result<u8, String> {
-        if self.position > 512 {
+        if self.position > BUFFER_SIZE {
             return Err("End of buffer!".into());
         }
         let result: u8 = self.raw_buffer[self.position];
@@ -29,7 +31,7 @@ impl WrappedBuffer {
     }
 
     pub fn get_slice(&self, start: usize, len: usize) -> Result<&[u8], String> {
-        if start + len >= 512 {
+        if start + len >= BUFFER_SIZE {
             return Err("End of buffer!".into());
         }
         let end = start + len;
@@ -47,7 +49,7 @@ impl WrappedBuffer {
     }
 
     pub fn peek(&self, pos: usize) -> Result<u8, String> {
-        if pos >= 512 {
+        if pos >= BUFFER_SIZE {
             return Err("End of buffer!".into());
         }
         Ok(self.raw_buffer[pos])
