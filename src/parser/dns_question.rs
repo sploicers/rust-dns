@@ -1,8 +1,4 @@
-use super::{
-    query_name_parser::{QueryName, QueryNameParser},
-    query_type::QueryType,
-    wrapped_buffer::WrappedBuffer,
-};
+use super::{query_name_parser::QueryName, query_type::QueryType, wrapped_buffer::WrappedBuffer};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DnsQuestion {
@@ -20,8 +16,12 @@ impl DnsQuestion {
 
     pub fn read(buffer: &mut WrappedBuffer) -> Result<DnsQuestion, String> {
         let mut result = DnsQuestion::new();
-        QueryName::read(buffer, &mut result.name)?;
+        let mut query_name = QueryName::new();
+        query_name.read(buffer)?;
+
+        result.name = query_name.value;
         result.query_type = QueryType::from_u16(buffer.read_u16()?);
+
         buffer.read_u16()?;
         Ok(result)
     }

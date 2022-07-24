@@ -30,6 +30,13 @@ impl WrappedBuffer {
         Ok((self.read_u16()? as u32) << 16 | self.read_u16()? as u32)
     }
 
+    pub fn get(&self, pos: usize) -> Result<u8, String> {
+        if pos >= BUFFER_SIZE {
+            return Err("End of buffer!".into());
+        }
+        Ok(self.raw_buffer[pos])
+    }
+
     pub fn get_slice(&self, start: usize, len: usize) -> Result<&[u8], String> {
         if start + len >= BUFFER_SIZE {
             return Err("End of buffer!".into());
@@ -48,11 +55,8 @@ impl WrappedBuffer {
         Ok(())
     }
 
-    pub fn peek(&self, pos: usize) -> Result<u8, String> {
-        if pos >= BUFFER_SIZE {
-            return Err("End of buffer!".into());
-        }
-        Ok(self.raw_buffer[pos])
+    pub fn peek(&self) -> Result<u8, String> {
+        Ok(self.raw_buffer[self.position])
     }
 
     pub fn pos(&self) -> usize {
@@ -82,7 +86,7 @@ mod tests {
     #[test]
     fn peek_fails_on_buffer_overrun() -> Result<(), Box<dyn Error>> {
         let buffer = WrappedBuffer::new();
-        expect_error(buffer.peek(BUFFER_SIZE), BUFFER_OVERRUN_MESSAGE)?;
+        expect_error(buffer.get(BUFFER_SIZE), BUFFER_OVERRUN_MESSAGE)?;
         Ok(())
     }
 
