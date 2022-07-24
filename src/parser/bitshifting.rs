@@ -21,3 +21,48 @@ pub fn get_lsn(val: u8) -> u8 {
 pub fn get_flag(flags: u8, pos: u8) -> bool {
     (flags & (1 << pos)) == 1
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{get_flag, get_lsb, get_lsn, get_msb, get_nth_octal};
+
+    #[test]
+    fn can_get_nth_octal() {
+        for i in 1..=4 {
+            assert_eq!(get_nth_octal(u32::MAX, i), 255);
+            assert_eq!(get_nth_octal(u32::MIN, i), 0);
+        }
+    }
+
+    #[test]
+    fn can_get_least_significant_byte() {
+        assert_eq!(get_lsb(u16::MAX), 255);
+        assert_eq!(get_lsb(u16::MIN), 0);
+    }
+
+    #[test]
+    fn can_get_most_significant_byte() {
+        assert_eq!(get_msb(u16::MAX), 255);
+        assert_eq!(get_msb(u16::MIN), 0);
+    }
+
+    #[test]
+    fn can_get_low_nibble() {
+        assert_eq!(get_lsn(u8::MAX), 15);
+        assert_eq!(get_lsn(u8::MIN), 0);
+    }
+
+    #[test]
+    fn can_get_flag_values_all_set() {
+        for i in 0..8 {
+            assert_eq!(get_flag(u8::MAX, i), true);
+        }
+    }
+
+    #[test]
+    fn can_get_flag_values_none_set() {
+        for i in 0..8 {
+            assert_eq!(get_flag(u8::MIN, i), false);
+        }
+    }
+}
