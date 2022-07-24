@@ -1,9 +1,12 @@
+use super::wrapped_buffer::WrappedBuffer;
 use std::{error::Error, fs::File, io::Read};
 
-use super::wrapped_buffer::WrappedBuffer;
-
 const TEST_DATA_DIR: &str = "test_data";
-pub const HEADER_SIZE: usize = 12;
+pub const GOOGLE_QUERY: &str = "google_query.txt";
+pub const HEADER_SIZE_BYTES: usize = 12;
+pub const ID_SIZE_BYTES: usize = 2;
+pub const FLAG_SECTION_SIZE_BYTES: usize = 2;
+pub const RECORD_COUNT_SIZE_BYTES: usize = 2;
 
 pub fn open_test_file(filename: String) -> std::io::Result<File> {
     File::open(format!(
@@ -16,7 +19,7 @@ pub fn open_test_file(filename: String) -> std::io::Result<File> {
 
 pub fn get_buffer_at_question_section(input_file: String) -> Result<WrappedBuffer, Box<dyn Error>> {
     let mut buffer = get_buffer_at_beginning(input_file)?;
-    buffer.seek(HEADER_SIZE)?; // Advance the buffer past the header to the beginning of the question section.
+    buffer.advance(HEADER_SIZE_BYTES)?; // Advance the buffer past the header to the beginning of the question section.
     Ok(buffer)
 }
 

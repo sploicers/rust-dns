@@ -68,7 +68,7 @@ impl QueryNameParser for QueryName {}
 #[cfg(test)]
 mod tests {
     use super::{QueryName, QueryNameParser};
-    use crate::parser::test_helpers::get_buffer_at_question_section;
+    use crate::parser::test_helpers::{get_buffer_at_question_section, GOOGLE_QUERY};
     use std::error::Error;
 
     #[test]
@@ -76,7 +76,7 @@ mod tests {
         let mut domain_name = String::new();
         let expected_domain_name = String::from("google.com");
         QueryName::read(
-            &mut get_buffer_at_question_section(String::from("google_query.txt"))?,
+            &mut get_buffer_at_question_section(String::from(GOOGLE_QUERY))?,
             &mut domain_name,
         )?;
         assert_eq!(domain_name, expected_domain_name);

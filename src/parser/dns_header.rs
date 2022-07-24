@@ -61,9 +61,14 @@ impl DnsHeader {
     }
 
     pub fn read(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
-        self.id = buffer.read_u16()?;
+        self.read_id(buffer)?;
         self.read_flags(buffer)?;
         self.read_record_counts(buffer)?;
+        Ok(())
+    }
+
+    fn read_id(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
+        self.id = buffer.read_u16()?;
         Ok(())
     }
 
@@ -92,5 +97,93 @@ impl DnsHeader {
         self.num_authorities = buffer.read_u16()?;
         self.num_additional = buffer.read_u16()?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::DnsHeader;
+    use crate::parser::{
+        test_helpers::{
+            get_buffer_at_beginning, FLAG_SECTION_SIZE_BYTES, GOOGLE_QUERY, ID_SIZE_BYTES,
+            RECORD_COUNT_SIZE_BYTES,
+        },
+        wrapped_buffer::WrappedBuffer,
+    };
+    use std::error::Error;
+
+    #[test]
+    fn can_read_id() -> Result<(), Box<dyn Error>> {
+        let mut result = DnsHeader::new();
+        let expected_id = 48088;
+        result.read_id(&mut get_buffer_at_beginning(String::from(GOOGLE_QUERY))?)?;
+        assert_eq!(result.id, expected_id);
+        Ok(())
+    }
+
+    #[test]
+    fn can_read_flags() -> Result<(), Box<dyn Error>> {
+        let mut result = DnsHeader::new();
+        let mut buffer = get_buffer_at_flags_section(String::from(GOOGLE_QUERY))?;
+        result.read_flags(&mut buffer)?;
+
+        assert_eq!(result.recursion_desired, true);
+        assert_eq!(result.truncated_message, false);
+        assert_eq!(result.authoritative_answer, false);
+        assert_eq!(result.response, false);
+        assert_eq!(result.checking_disabled, false);
+        assert_eq!(result.authentic_data, false);
+        assert_eq!(result.recursion_available, false);
+
+        Ok(())
+    }
+
+    #[test]
+    fn can_read_question_count() -> Result<(), Box<dyn Error>> {
+        let mut buffer = get_buffer_at_record_count_section(String::from(GOOGLE_QUERY))?;
+        let expected_question_count = 1;
+        assert_eq!(buffer.read_u16()?, expected_question_count);
+        Ok(())
+    }
+
+    #[test]
+    fn can_read_answer_count() -> Result<(), Box<dyn Error>> {
+        let mut buffer = get_buffer_at_record_count_section(String::from(GOOGLE_QUERY))?;
+        let expected_answer_count = 1;
+        buffer.advance(RECORD_COUNT_SIZE_BYTES)?;
+        assert_eq!(buffer.read_u16()?, expected_answer_count);
+        Ok(())
+    }
+
+    #[test]
+    fn can_read_authority_count() -> Result<(), Box<dyn Error>> {
+        let mut buffer = get_buffer_at_record_count_section(String::from(GOOGLE_QUERY))?;
+        let expected_authority_count = 0;
+        buffer.advance(RECORD_COUNT_SIZE_BYTES * 2)?;
+        assert_eq!(buffer.read_u16()?, expected_authority_count);
+        Ok(())
+    }
+
+    #[test]
+    fn can_read_additional_record_count() -> Result<(), Box<dyn Error>> {
+        let mut buffer = get_buffer_at_record_count_section(String::from(GOOGLE_QUERY))?;
+        let expected_additional_record_count = 0;
+        buffer.advance(RECORD_COUNT_SIZE_BYTES * 3)?;
+        assert_eq!(buffer.read_u16()?, expected_additional_record_count);
+        Ok(())
+    }
+
+    fn get_buffer_at_flags_section(input_file: String) -> Result<WrappedBuffer, Box<dyn Error>> {
+        let mut buffer = get_buffer_at_beginning(input_file)?;
+        buffer.advance(ID_SIZE_BYTES)?;
+        Ok(buffer)
+    }
+
+    fn get_buffer_at_record_count_section(
+        input_file: String,
+    ) -> Result<WrappedBuffer, Box<dyn Error>> {
+        let mut buffer = get_buffer_at_beginning(input_file)?;
+        buffer.advance(ID_SIZE_BYTES + FLAG_SECTION_SIZE_BYTES)?;
+        Ok(buffer)
     }
 }

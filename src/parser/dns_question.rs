@@ -31,7 +31,7 @@ impl DnsQuestion {
 mod tests {
     use crate::parser::{
         dns_question::DnsQuestion,
-        test_helpers::{get_buffer_at_beginning, get_buffer_at_question_section},
+        test_helpers::{get_buffer_at_beginning, get_buffer_at_question_section, GOOGLE_QUERY},
         QueryType,
     };
     use std::error::Error;
@@ -40,7 +40,7 @@ mod tests {
     fn reads_name_successfully() -> Result<(), Box<dyn Error>> {
         let expected_domain_name = String::from("google.com");
         let question = DnsQuestion::read(&mut get_buffer_at_question_section(String::from(
-            "google_query.txt",
+            GOOGLE_QUERY,
         ))?)?;
         assert_eq!(question.name.is_ascii(), true);
         assert_eq!(question.name, expected_domain_name);
@@ -51,7 +51,7 @@ mod tests {
     fn reads_type_successfully() -> Result<(), Box<dyn Error>> {
         let expected_type = QueryType::A;
         let question = DnsQuestion::read(&mut get_buffer_at_question_section(String::from(
-            "google_query.txt",
+            GOOGLE_QUERY,
         ))?)?;
         assert_eq!(question.query_type, expected_type);
         Ok(())
@@ -60,9 +60,8 @@ mod tests {
     #[test]
     fn fails_to_read_name_if_buffer_at_wrong_pos() -> Result<(), Box<dyn Error>> {
         let expected_domain_name = String::from("google.com");
-        let question = DnsQuestion::read(&mut get_buffer_at_beginning(String::from(
-            "google_query.txt",
-        ))?)?;
+        let question =
+            DnsQuestion::read(&mut get_buffer_at_beginning(String::from(GOOGLE_QUERY))?)?;
         assert_ne!(question.name, expected_domain_name);
         assert_eq!(question.name.is_ascii(), false);
         Ok(())
