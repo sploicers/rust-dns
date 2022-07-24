@@ -130,10 +130,10 @@ mod tests {
         assert_eq!(result.recursion_desired, true);
         assert_eq!(result.truncated_message, false);
         assert_eq!(result.authoritative_answer, false);
-        assert_eq!(result.response, false);
+        assert_eq!(result.response, true);
         assert_eq!(result.checking_disabled, false);
         assert_eq!(result.authentic_data, false);
-        assert_eq!(result.recursion_available, false);
+        assert_eq!(result.recursion_available, true);
 
         Ok(())
     }

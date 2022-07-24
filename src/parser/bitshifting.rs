@@ -19,7 +19,7 @@ pub fn get_lsn(val: u8) -> u8 {
 
 // is nth bit set?
 pub fn get_flag(flags: u8, pos: u8) -> bool {
-    (flags & (1 << pos)) == 1
+    ((flags >> pos) & 1) == 1
 }
 
 #[cfg(test)]
