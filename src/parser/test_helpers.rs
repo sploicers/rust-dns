@@ -4,9 +4,6 @@ use std::{error::Error, fs::File, io::Read};
 const TEST_DATA_DIR: &str = "test_data";
 pub const GOOGLE_QUERY: &str = "google_query.txt";
 pub const HEADER_SIZE_BYTES: usize = 12;
-pub const ID_SIZE_BYTES: usize = 2;
-pub const FLAG_SECTION_SIZE_BYTES: usize = 2;
-pub const RECORD_COUNT_SIZE_BYTES: usize = 2;
 
 pub fn open_test_file(filename: String) -> std::io::Result<File> {
     File::open(format!(
