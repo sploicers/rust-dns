@@ -68,7 +68,7 @@ mod tests {
     use super::DnsRecord;
     use crate::parser::{
         dns_question::DnsQuestion,
-        test_helpers::{are_same_variant, get_buffer_at_question_section, GOOGLE_QUERY},
+        test_helpers::{are_same_enum_variant, get_buffer_at_question_section, GOOGLE_QUERY},
         wrapped_buffer::WrappedBuffer,
     };
     use std::{error::Error, net::Ipv4Addr};
@@ -84,7 +84,7 @@ mod tests {
             ttl: 0,
         };
 
-        assert!(are_same_variant(&record, &expected_record));
+        assert!(are_same_enum_variant(&record, &expected_record));
         Ok(())
     }
 

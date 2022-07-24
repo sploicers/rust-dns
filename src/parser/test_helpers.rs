@@ -35,6 +35,6 @@ pub fn expect_error<T>(result: Result<T, String>, msg: &str) -> Result<(), Box<d
     }
 }
 
-pub fn are_same_variant<T>(a: &T, b: &T) -> bool {
+pub fn are_same_enum_variant<T>(a: &T, b: &T) -> bool {
     std::mem::discriminant(a) == std::mem::discriminant(b)
 }

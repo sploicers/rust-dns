@@ -70,3 +70,49 @@ impl Display for DnsPacket {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::DnsPacket;
+    use crate::parser::test_helpers::{get_buffer_at_beginning, GOOGLE_QUERY};
+    use std::error::Error;
+
+    #[test]
+    fn actual_question_count_matches_header() -> Result<(), Box<dyn Error>> {
+        let packet = read_packet()?;
+        assert_eq!(packet.header.num_questions as usize, packet.questions.len());
+        Ok(())
+    }
+
+    #[test]
+    fn actual_answer_count_matches_header() -> Result<(), Box<dyn Error>> {
+        let packet = read_packet()?;
+        assert_eq!(packet.header.num_answers as usize, packet.answers.len());
+        Ok(())
+    }
+
+    #[test]
+    fn actual_authority_count_matches_header() -> Result<(), Box<dyn Error>> {
+        let packet = read_packet()?;
+        assert_eq!(
+            packet.header.num_authorities as usize,
+            packet.authorities.len()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn actual_additional_record_count_matches_header() -> Result<(), Box<dyn Error>> {
+        let packet = read_packet()?;
+        assert_eq!(
+            packet.header.num_additional as usize,
+            packet.additional_records.len()
+        );
+        Ok(())
+    }
+
+    fn read_packet() -> Result<DnsPacket, Box<dyn Error>> {
+        let mut buffer = get_buffer_at_beginning(String::from(GOOGLE_QUERY))?;
+        Ok(DnsPacket::from_buffer(&mut buffer)?)
+    }
+}
