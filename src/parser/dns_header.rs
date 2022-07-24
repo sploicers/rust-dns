@@ -133,6 +133,7 @@ mod tests {
         assert_eq!(result.response, true);
         assert_eq!(result.checking_disabled, false);
         assert_eq!(result.authentic_data, false);
+        assert_eq!(result.z, false);
         assert_eq!(result.recursion_available, true);
 
         Ok(())
