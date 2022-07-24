@@ -1,4 +1,6 @@
-use std::{error::Error, fs::File};
+use std::{error::Error, fs::File, io::Read};
+
+use super::wrapped_buffer::WrappedBuffer;
 
 const TEST_DATA_DIR: &str = "test_data";
 pub const HEADER_SIZE: usize = 12;
@@ -10,6 +12,19 @@ pub fn open_test_file(filename: String) -> std::io::Result<File> {
         TEST_DATA_DIR,
         filename
     ))
+}
+
+pub fn get_buffer_at_question_section(input_file: String) -> Result<WrappedBuffer, Box<dyn Error>> {
+    let mut buffer = get_buffer_at_beginning(input_file)?;
+    buffer.seek(HEADER_SIZE)?; // Advance the buffer past the header to the beginning of the question section.
+    Ok(buffer)
+}
+
+pub fn get_buffer_at_beginning(input_file: String) -> Result<WrappedBuffer, Box<dyn Error>> {
+    let mut buffer = WrappedBuffer::new();
+    let mut file = open_test_file(input_file)?;
+    file.read(&mut buffer.raw_buffer)?;
+    Ok(buffer)
 }
 
 pub fn expect_error<T>(result: Result<T, String>, msg: &str) -> Result<(), Box<dyn Error>> {

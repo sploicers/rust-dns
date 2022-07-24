@@ -13,3 +13,19 @@ impl QueryType {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::QueryType;
+
+    #[test]
+    fn gets_value_for_known_type() {
+        assert_eq!(QueryType::A, QueryType::from_u16(1));
+    }
+
+    #[test]
+    fn gets_unknown_value_for_unknown_type() {
+        assert_eq!(QueryType::UNKNOWN(0), QueryType::from_u16(0));
+        assert_eq!(QueryType::UNKNOWN(999), QueryType::from_u16(999));
+    }
+}

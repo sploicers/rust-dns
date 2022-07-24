@@ -20,3 +20,19 @@ impl ResultCode {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::ResultCode;
+
+    #[test]
+    pub fn creates_noerr_result_from_zero() {
+        assert_eq!(ResultCode::from_number(0), ResultCode::NOERROR);
+    }
+
+    #[test]
+    pub fn creates_noerr_result_from_num_gt_five() {
+        assert_eq!(ResultCode::from_number(6), ResultCode::NOERROR);
+        assert_eq!(ResultCode::from_number(0), ResultCode::from_number(6));
+    }
+}

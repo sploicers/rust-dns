@@ -67,21 +67,18 @@ impl QueryNameParser for QueryName {}
 
 #[cfg(test)]
 mod tests {
-    use super::{QueryName, QueryNameParser, WrappedBuffer};
-    use crate::parser::test_helpers::{open_test_file, HEADER_SIZE};
-    use std::{error::Error, io::Read};
+    use super::{QueryName, QueryNameParser};
+    use crate::parser::test_helpers::get_buffer_at_question_section;
+    use std::error::Error;
 
     #[test]
     fn reads_domain_name_successfully() -> Result<(), Box<dyn Error>> {
-        let mut buffer = WrappedBuffer::new();
-        let mut file = open_test_file(String::from("google_query.txt"))?;
         let mut domain_name = String::new();
         let expected_domain_name = String::from("google.com");
-
-        file.read(&mut buffer.raw_buffer)?;
-        buffer.seek(HEADER_SIZE)?; // Advance the buffer past the header to the beginning of the question section.
-        QueryName::read(&mut buffer, &mut domain_name)?;
-
+        QueryName::read(
+            &mut get_buffer_at_question_section(String::from("google_query.txt"))?,
+            &mut domain_name,
+        )?;
         assert_eq!(domain_name, expected_domain_name);
         Ok(())
     }
