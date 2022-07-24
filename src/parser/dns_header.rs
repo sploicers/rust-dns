@@ -104,14 +104,13 @@ impl DnsHeader {
 mod tests {
     use super::DnsHeader;
     use crate::parser::{
-        test_helpers::{get_buffer_at_beginning, GOOGLE_QUERY},
+        test_helpers::{get_buffer_at_beginning, GOOGLE_QUERY, RECORD_COUNT_SIZE_BYTES},
         wrapped_buffer::WrappedBuffer,
     };
     use std::error::Error;
 
     const ID_SIZE_BYTES: usize = 2;
     const FLAG_SECTION_SIZE_BYTES: usize = 2;
-    const RECORD_COUNT_SIZE_BYTES: usize = 2;
 
     #[test]
     fn can_read_id() -> Result<(), Box<dyn Error>> {
