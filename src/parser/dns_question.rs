@@ -25,6 +25,13 @@ impl DnsQuestion {
         buffer.read_u16()?;
         Ok(result)
     }
+
+    pub fn write(&self, buffer: &mut WrappedBuffer) -> Result<(), String> {
+        QueryName::write(buffer, &self.name)?;
+        buffer.write_u16(self.query_type.to_u16())?;
+        buffer.write_u16(1)?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -32,6 +39,7 @@ mod tests {
     use crate::parser::{
         dns_question::DnsQuestion,
         test_helpers::{get_buffer_at_beginning, get_buffer_at_question_section, GOOGLE_QUERY},
+        wrapped_buffer::WrappedBuffer,
         QueryType,
     };
     use std::error::Error;
@@ -71,5 +79,41 @@ mod tests {
     #[ignore = "Need to make a hex dump of a query with unknown type"]
     fn reads_unknown_query_type_successfully() -> Result<(), Box<dyn Error>> {
         todo!()
+    }
+
+    #[test]
+    fn writes_name_successfully() -> Result<(), Box<dyn Error>> {
+        let expected_domain_name = "google.com";
+
+        let mut buffer = WrappedBuffer::new();
+        let question = DnsQuestion {
+            name: String::from(expected_domain_name),
+            query_type: QueryType::A,
+        };
+
+        question.write(&mut buffer)?;
+        buffer.seek(0)?;
+        let result = DnsQuestion::read(&mut buffer)?;
+
+        assert_eq!(result.name, expected_domain_name);
+        Ok(())
+    }
+
+    #[test]
+    fn writes_type_successfully() -> Result<(), Box<dyn Error>> {
+        let expected_query_type = QueryType::A;
+
+        let mut buffer = WrappedBuffer::new();
+        let question = DnsQuestion {
+            name: String::from("github.ru"),
+            query_type: expected_query_type,
+        };
+
+        question.write(&mut buffer)?;
+        buffer.seek(0)?;
+        let result = DnsQuestion::read(&mut buffer)?;
+
+        assert_eq!(result.query_type, expected_query_type);
+        Ok(())
     }
 }

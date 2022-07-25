@@ -61,6 +61,32 @@ impl DnsRecord {
             }
         }
     }
+
+    pub fn write(&self, buffer: &mut WrappedBuffer) -> Result<usize, String> {
+        let start_position = buffer.pos();
+
+        match *self {
+            DnsRecord::A {
+                ref domain,
+                ref address,
+                ttl,
+            } => {
+                QueryName::write(buffer, &domain)?;
+                buffer.write_u16(QueryType::A.to_u16())?;
+                buffer.write_u16(1)?; // "class" (always 1)
+                buffer.write_u32(ttl)?;
+                buffer.write_u16(4)?; // length of data specific to this record type - in this case a 4-byte IP address
+
+                let ip_addr_octets = address.octets();
+
+                for octet in ip_addr_octets {
+                    buffer.write_u8(octet)?;
+                }
+            }
+            _ => (),
+        };
+        Ok(buffer.pos() - start_position)
+    }
 }
 
 #[cfg(test)]
@@ -89,9 +115,71 @@ mod tests {
     }
 
     #[test]
+    fn can_write_record_of_known_type() -> Result<(), Box<dyn Error>> {
+        let expected_domain_name = "google.com";
+        let expected_ip_address = Ipv4Addr::new(172, 29, 48, 1);
+        let expected_ttl = 291;
+
+        let record = DnsRecord::A {
+            domain: String::from(expected_domain_name),
+            address: expected_ip_address,
+            ttl: expected_ttl,
+        };
+        let mut buffer = WrappedBuffer::new();
+        record.write(&mut buffer)?;
+        buffer.seek(0)?;
+
+        match DnsRecord::read(&mut buffer)? {
+            DnsRecord::A {
+                domain,
+                address,
+                ttl,
+            } => {
+                assert_eq!(domain, expected_domain_name);
+                assert_eq!(address, expected_ip_address);
+                assert_eq!(ttl, expected_ttl);
+            }
+            _ => panic!(
+                "Expected to read back a DNS record of the same type as the record that was written."
+            ),
+        }
+
+        Ok(())
+    }
+
+    #[test]
     #[ignore = "Need to edit a packet to have an unrecognised query type"]
     fn can_read_record_of_unknown_type() -> Result<(), Box<dyn Error>> {
         todo!()
+    }
+
+    #[test]
+    fn skips_write_for_record_of_unknown_type() -> Result<(), Box<dyn Error>> {
+        let unknown_record = DnsRecord::UNKNOWN {
+            domain: String::from("google.com"),
+            query_type: 10,
+            data_length: 22,
+            ttl: 8541,
+        };
+        let mut buffer = WrappedBuffer::new();
+        unknown_record.write(&mut buffer)?;
+        buffer.seek(0)?;
+
+        match DnsRecord::read(&mut buffer)? {
+            DnsRecord::UNKNOWN {
+                domain,
+                query_type,
+                data_length,
+                ttl,
+            } => {
+                assert_eq!(domain, String::new());
+                assert_eq!(query_type, 0);
+                assert_eq!(data_length, 0);
+                assert_eq!(ttl, 0);
+            }
+            _ => panic!("Expected to skip writing DNS record of unknown type."),
+        }
+        Ok(())
     }
 
     #[test]

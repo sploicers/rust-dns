@@ -12,6 +12,13 @@ impl QueryType {
             _ => QueryType::UNKNOWN(val),
         }
     }
+
+    pub fn to_u16(&self) -> u16 {
+        match *self {
+            QueryType::A => 1,
+            QueryType::UNKNOWN(_) => 0,
+        }
+    }
 }
 
 #[cfg(test)]
