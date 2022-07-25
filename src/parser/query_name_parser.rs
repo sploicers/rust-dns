@@ -61,6 +61,24 @@ pub trait QueryNameParser {
         }
         Ok(())
     }
+
+    fn write(buffer: &mut WrappedBuffer, name: &str) -> Result<(), String> {
+        for segment in name.split('.') {
+            let length = segment.len() as u8;
+
+            if length > 0x3f {
+                return Err("Individual domain name segments cannot exceed 63 chars long".into());
+            }
+
+            buffer.write_u8(length)?;
+
+            for byte in segment.as_bytes() {
+                buffer.write_u8(*byte)?;
+            }
+        }
+        buffer.write_u8(0)?; // Null-terminate the name.
+        Ok(())
+    }
 }
 
 impl QueryNameParser for QueryName {}
@@ -68,7 +86,10 @@ impl QueryNameParser for QueryName {}
 #[cfg(test)]
 mod tests {
     use super::{QueryName, QueryNameParser};
-    use crate::parser::test_helpers::{get_buffer_at_question_section, GOOGLE_QUERY};
+    use crate::parser::{
+        test_helpers::{get_buffer_at_question_section, GOOGLE_QUERY},
+        wrapped_buffer::WrappedBuffer,
+    };
     use std::error::Error;
 
     #[test]
@@ -80,6 +101,21 @@ mod tests {
             &mut domain_name,
         )?;
         assert_eq!(domain_name, expected_domain_name);
+        Ok(())
+    }
+
+    #[test]
+    fn writes_domain_name_successfully() -> Result<(), Box<dyn Error>> {
+        let expected_domain_name = "google.com";
+        let mut actual_domain_name = String::new();
+
+        let mut buffer = WrappedBuffer::new();
+
+        QueryName::write(&mut buffer, "google.com")?;
+        buffer.seek(0)?;
+        QueryName::read(&mut buffer, &mut actual_domain_name)?;
+
+        assert_eq!(expected_domain_name, actual_domain_name);
         Ok(())
     }
 

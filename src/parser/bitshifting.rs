@@ -1,4 +1,4 @@
-pub fn get_nth_octal(num: u32, n: usize) -> u8 {
+pub fn get_nth_octal(num: u32, n: u32) -> u8 {
     ((num >> (32 - (8 * n))) & 0xFF) as u8
 }
 

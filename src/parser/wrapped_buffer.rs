@@ -1,3 +1,5 @@
+use super::bitshifting::{get_lsb, get_msb, get_nth_octal};
+
 const BUFFER_SIZE: usize = 512;
 
 pub struct WrappedBuffer {
@@ -18,7 +20,7 @@ impl WrappedBuffer {
             return Err("End of buffer!".into());
         }
         let result: u8 = self.raw_buffer[self.position];
-        self.position += 1;
+        self.advance(1)?;
         Ok(result)
     }
 
@@ -28,6 +30,28 @@ impl WrappedBuffer {
 
     pub fn read_u32(&mut self) -> Result<u32, String> {
         Ok((self.read_u16()? as u32) << 16 | self.read_u16()? as u32)
+    }
+
+    pub fn write_u8(&mut self, value: u8) -> Result<(), String> {
+        if self.position >= BUFFER_SIZE {
+            return Err("End of buffer!".into());
+        }
+        self.raw_buffer[self.position] = value;
+        self.advance(1)?;
+        Ok(())
+    }
+
+    pub fn write_u16(&mut self, value: u16) -> Result<(), String> {
+        self.write_u8(get_msb(value))?;
+        self.write_u8(get_lsb(value))?;
+        Ok(())
+    }
+
+    pub fn write_u32(&mut self, value: u32) -> Result<(), String> {
+        for i in 1..=4 {
+            self.write_u8(get_nth_octal(i, value))?;
+        }
+        Ok(())
     }
 
     pub fn get_slice(&self, start: usize, len: usize) -> Result<&[u8], String> {
