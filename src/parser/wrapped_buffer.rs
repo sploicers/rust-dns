@@ -49,7 +49,7 @@ impl WrappedBuffer {
 
     pub fn write_u32(&mut self, value: u32) -> Result<(), String> {
         for i in 1..=4 {
-            self.write_u8(get_nth_octal(i, value))?;
+            self.write_u8(get_nth_octal(value, i))?;
         }
         Ok(())
     }
