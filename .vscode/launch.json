@@ -1,0 +1,45 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug",
+			"cargo": {
+				"args": [
+					"build",
+					"--bin=dns_server_tutorial_rust",
+					"--package=dns_server_tutorial_rust"
+				],
+				"filter": {
+					"name": "dns_server_tutorial_rust",
+					"kind": "bin"
+				}
+			},
+			"args": ["test_data/google_query.txt"],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug unit tests",
+			"cargo": {
+				"args": [
+					"test",
+					"--no-run",
+					"--bin=dns_server_tutorial_rust",
+					"--package=dns_server_tutorial_rust"
+				],
+				"filter": {
+					"name": "dns_server_tutorial_rust",
+					"kind": "bin"
+				}
+			},
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		}
+	]
+}
