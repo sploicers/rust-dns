@@ -67,6 +67,13 @@ impl DnsHeader {
         Ok(())
     }
 
+    pub fn write(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
+        self.write_id(buffer)?;
+        self.write_flags(buffer)?;
+        self.write_record_counts(buffer)?;
+        Ok(())
+    }
+
     fn read_id(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
         self.id = buffer.read_u16()?;
         Ok(())
@@ -98,6 +105,37 @@ impl DnsHeader {
         self.num_additional = buffer.read_u16()?;
         Ok(())
     }
+
+    fn write_id(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
+        Ok(buffer.write_u16(self.id)?)
+    }
+
+    fn write_flags(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
+        let first_flags_byte = self.recursion_desired as u8
+            | (self.truncated_message as u8) << 1
+            | (self.authoritative_answer as u8) << 2
+            | (self.opcode << 3)
+            | (self.response as u8) << 7;
+
+        buffer.write_u8(first_flags_byte)?;
+
+        let second_flags_byte = self.rescode as u8
+            | ((self.checking_disabled as u8) << 4)
+            | ((self.authentic_data as u8) << 5)
+            | ((self.z as u8) << 6)
+            | ((self.recursion_available as u8) << 7);
+
+        buffer.write_u8(second_flags_byte)?;
+        Ok(())
+    }
+
+    fn write_record_counts(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
+        buffer.write_u16(self.num_questions)?;
+        buffer.write_u16(self.num_answers)?;
+        buffer.write_u16(self.num_authorities)?;
+        buffer.write_u16(self.num_additional)?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -106,6 +144,7 @@ mod tests {
     use crate::parser::{
         test_helpers::{get_buffer_at_beginning, GOOGLE_QUERY, RECORD_COUNT_SIZE_BYTES},
         wrapped_buffer::WrappedBuffer,
+        ResultCode,
     };
     use std::error::Error;
 
@@ -171,6 +210,102 @@ mod tests {
         let expected_additional_record_count = 0;
         buffer.advance(RECORD_COUNT_SIZE_BYTES * 3)?;
         assert_eq!(buffer.read_u16()?, expected_additional_record_count);
+        Ok(())
+    }
+
+    #[test]
+    fn can_write_id() -> Result<(), Box<dyn Error>> {
+        let mut buffer = WrappedBuffer::new();
+        let mut header_to_write = DnsHeader::new();
+        let mut empty_header = DnsHeader::new();
+
+        let expected_id = 8451;
+        header_to_write.id = expected_id;
+
+        header_to_write.write(&mut buffer)?;
+        buffer.seek(0)?;
+        empty_header.read(&mut buffer)?;
+
+        assert_eq!(empty_header.id, expected_id);
+        Ok(())
+    }
+
+    #[test]
+    fn can_write_flags() -> Result<(), Box<dyn Error>> {
+        let mut buffer = WrappedBuffer::new();
+        let mut header_to_write = DnsHeader::new();
+        let mut empty_header = DnsHeader::new();
+
+        header_to_write.recursion_desired = true;
+        header_to_write.truncated_message = false;
+        header_to_write.authoritative_answer = false;
+        header_to_write.opcode = 0;
+        header_to_write.response = false;
+        header_to_write.rescode = ResultCode::NOERROR;
+        header_to_write.checking_disabled = false;
+        header_to_write.authentic_data = false;
+        header_to_write.z = false;
+        header_to_write.recursion_available = false;
+        header_to_write.num_questions = 1;
+        header_to_write.num_answers = 1;
+        header_to_write.num_authorities = 0;
+        header_to_write.num_additional = 0;
+
+        header_to_write.write(&mut buffer)?;
+        buffer.seek(0)?;
+        empty_header.read(&mut buffer)?;
+
+        assert_eq!(
+            header_to_write.recursion_desired,
+            empty_header.recursion_desired
+        );
+        assert_eq!(
+            header_to_write.truncated_message,
+            empty_header.truncated_message
+        );
+        assert_eq!(
+            header_to_write.authoritative_answer,
+            empty_header.authoritative_answer
+        );
+        assert_eq!(header_to_write.opcode, empty_header.opcode);
+        assert_eq!(header_to_write.response, empty_header.response);
+        assert_eq!(header_to_write.rescode, empty_header.rescode);
+        assert_eq!(
+            header_to_write.checking_disabled,
+            empty_header.checking_disabled
+        );
+        assert_eq!(header_to_write.authentic_data, empty_header.authentic_data);
+        assert_eq!(header_to_write.z, empty_header.z);
+        assert_eq!(
+            header_to_write.recursion_available,
+            empty_header.recursion_available
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn can_write_record_counts() -> Result<(), Box<dyn Error>> {
+        let mut buffer = WrappedBuffer::new();
+        let mut header_to_write = DnsHeader::new();
+        let mut empty_header = DnsHeader::new();
+
+        header_to_write.num_questions = 1;
+        header_to_write.num_answers = 1;
+        header_to_write.num_authorities = 0;
+        header_to_write.num_additional = 0;
+
+        header_to_write.write(&mut buffer)?;
+        buffer.seek(0)?;
+        empty_header.read(&mut buffer)?;
+
+        assert_eq!(header_to_write.num_questions, empty_header.num_questions);
+        assert_eq!(header_to_write.num_answers, empty_header.num_answers);
+        assert_eq!(
+            header_to_write.num_authorities,
+            empty_header.num_authorities
+        );
+        assert_eq!(header_to_write.num_additional, empty_header.num_additional);
         Ok(())
     }
 
