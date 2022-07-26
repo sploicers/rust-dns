@@ -24,7 +24,7 @@ pub fn get_buffer_at_question_section(input_file: String) -> Result<WrappedBuffe
 pub fn get_buffer_at_beginning(input_file: String) -> Result<WrappedBuffer, Box<dyn Error>> {
     let mut buffer = WrappedBuffer::new();
     let mut file = open_test_file(input_file)?;
-    file.read(&mut buffer.raw_buffer)?;
+    file.read(&mut buffer.as_slice()?)?;
     Ok(buffer)
 }
 

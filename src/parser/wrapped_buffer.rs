@@ -3,7 +3,7 @@ use super::bitshifting::{get_lsb, get_msb, get_nth_octal};
 const BUFFER_SIZE: usize = 512;
 
 pub struct WrappedBuffer {
-    pub raw_buffer: [u8; BUFFER_SIZE],
+    raw_buffer: [u8; BUFFER_SIZE],
     position: usize,
 }
 
@@ -60,6 +60,10 @@ impl WrappedBuffer {
         }
         let end = start + len;
         Ok(&self.raw_buffer[start..end])
+    }
+
+    pub fn as_slice(&mut self) -> Result<&mut [u8], String> {
+        Ok(&mut self.raw_buffer[0..BUFFER_SIZE])
     }
 
     pub fn advance(&mut self, num_steps: usize) -> Result<(), String> {

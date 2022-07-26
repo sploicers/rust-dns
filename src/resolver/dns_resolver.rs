@@ -26,10 +26,10 @@ impl DnsResolver {
         query.write(&mut query_buffer)?;
 
         self.socket.send_to(
-            &query_buffer.raw_buffer[0..query_buffer.pos()],
+            &query_buffer.get_slice(0, query_buffer.pos())?,
             (self.ip, SOCKET_PORT),
         )?;
-        self.socket.recv_from(&mut response_buffer.raw_buffer)?;
+        self.socket.recv_from(&mut response_buffer.as_slice()?)?;
         Ok(DnsPacket::from_buffer(&mut response_buffer)?)
     }
 }

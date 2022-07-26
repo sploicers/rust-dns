@@ -27,7 +27,7 @@ impl DnsPacket {
 
     pub fn from_reader(reader: &mut dyn Read) -> Result<DnsPacket, Box<dyn Error>> {
         let mut buffer = WrappedBuffer::new();
-        reader.read(&mut buffer.raw_buffer)?;
+        reader.read(&mut buffer.as_slice()?)?;
         Ok(DnsPacket::from_buffer(&mut buffer)?)
     }
 
