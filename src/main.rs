@@ -1,4 +1,5 @@
 mod parser;
+mod resolver;
 
 use parser::DnsPacket;
 use std::{error::Error, fs::File, io::Read};

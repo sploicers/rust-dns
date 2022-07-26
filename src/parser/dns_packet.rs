@@ -15,24 +15,20 @@ pub struct DnsPacket {
 }
 
 impl DnsPacket {
-    fn new() -> DnsPacket {
-        DnsPacket {
-            header: DnsHeader::new(),
-            questions: Vec::new(),
-            answers: Vec::new(),
-            authorities: Vec::new(),
-            additional_records: Vec::new(),
-        }
-    }
-
     pub fn from_reader(reader: &mut dyn Read) -> Result<DnsPacket, Box<dyn Error>> {
         let mut buffer = WrappedBuffer::new();
         reader.read(&mut buffer.raw_buffer)?;
         Ok(DnsPacket::from_buffer(&mut buffer)?)
     }
 
-    fn from_buffer(buffer: &mut WrappedBuffer) -> Result<DnsPacket, String> {
-        let mut packet = DnsPacket::new();
+    pub fn from_buffer(buffer: &mut WrappedBuffer) -> Result<DnsPacket, String> {
+        let mut packet = DnsPacket {
+            header: DnsHeader::new(),
+            questions: Vec::new(),
+            answers: Vec::new(),
+            authorities: Vec::new(),
+            additional_records: Vec::new(),
+        };
         packet.header.read(buffer)?;
 
         for _ in 0..packet.header.num_questions {
@@ -48,6 +44,28 @@ impl DnsPacket {
             packet.additional_records.push(DnsRecord::read(buffer)?);
         }
         Ok(packet)
+    }
+
+    pub fn write(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
+        self.header.num_questions = self.questions.len() as u16;
+        self.header.num_answers = self.answers.len() as u16;
+        self.header.num_authorities = self.authorities.len() as u16;
+        self.header.num_additional = self.additional_records.len() as u16;
+        self.header.write(buffer)?;
+
+        for question in &self.questions {
+            question.write(buffer)?;
+        }
+        for record in &self.answers {
+            record.write(buffer)?;
+        }
+        for record in &self.authorities {
+            record.write(buffer)?;
+        }
+        for record in &self.additional_records {
+            record.write(buffer)?;
+        }
+        Ok(())
     }
 }
 
