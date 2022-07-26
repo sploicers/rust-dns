@@ -15,6 +15,16 @@ pub struct DnsPacket {
 }
 
 impl DnsPacket {
+    pub fn new() -> DnsPacket {
+        DnsPacket {
+            header: DnsHeader::new(),
+            questions: Vec::new(),
+            answers: Vec::new(),
+            authorities: Vec::new(),
+            additional_records: Vec::new(),
+        }
+    }
+
     pub fn from_reader(reader: &mut dyn Read) -> Result<DnsPacket, Box<dyn Error>> {
         let mut buffer = WrappedBuffer::new();
         reader.read(&mut buffer.raw_buffer)?;

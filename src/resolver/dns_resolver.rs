@@ -4,6 +4,8 @@ use std::{
     net::{Ipv4Addr, UdpSocket},
 };
 
+const SOCKET_PORT: u16 = 53;
+
 pub struct DnsResolver {
     ip: Ipv4Addr,
     socket: UdpSocket,
@@ -12,8 +14,10 @@ pub struct DnsResolver {
 
 impl DnsResolver {
     pub fn new(ip: Ipv4Addr, port: u16) -> Result<DnsResolver, Box<dyn Error>> {
-        let socket = UdpSocket::bind((ip, port))?;
-        Ok(DnsResolver { ip, socket, port })
+        match UdpSocket::bind((Ipv4Addr::UNSPECIFIED, port)) {
+            Ok(socket) => Ok(DnsResolver { ip, socket, port }),
+            _ => panic!("Failed to bind socket! (ip: {}, port: {})", ip, port),
+        }
     }
 
     pub fn query(&self, query: &mut DnsPacket) -> Result<DnsPacket, Box<dyn Error>> {
@@ -23,9 +27,48 @@ impl DnsResolver {
 
         self.socket.send_to(
             &query_buffer.raw_buffer[0..query_buffer.pos()],
-            (self.ip, self.port),
+            (self.ip, SOCKET_PORT),
         )?;
         self.socket.recv_from(&mut response_buffer.raw_buffer)?;
         Ok(DnsPacket::from_buffer(&mut response_buffer)?)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::DnsResolver;
+    use crate::parser::{DnsPacket, DnsQuestion, DnsRecord, QueryType};
+    use std::{error::Error, net::Ipv4Addr};
+
+    #[test]
+    fn can_answer_dns_query() -> Result<(), Box<dyn Error>> {
+        let resolver = DnsResolver::new(Ipv4Addr::new(8, 8, 8, 8), 8000)?;
+
+        let expected_domain = "google.com";
+        let mut query: DnsPacket = build_query_packet(expected_domain.to_string(), QueryType::A);
+        let response: DnsPacket = resolver.query(&mut query)?;
+        let answers = response.answers;
+
+        match answers.first() {
+            Some(answer) => match answer {
+                DnsRecord::A { domain, .. } => {
+                    assert_eq!(domain, expected_domain);
+                }
+                _ => panic!("Expected DNS query answer to be an A record, got unknown type."),
+            },
+            _ => panic!("Expected to receive an answer to DNS query."),
+        };
+
+        Ok(())
+    }
+
+    fn build_query_packet(name: String, query_type: QueryType) -> DnsPacket {
+        let mut query = DnsPacket::new();
+        query.header.id = 8541;
+        query.header.num_questions = 1;
+        query.header.recursion_desired = true;
+        query.questions.push(DnsQuestion { name, query_type });
+
+        query
     }
 }
