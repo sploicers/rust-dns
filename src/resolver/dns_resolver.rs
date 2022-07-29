@@ -9,13 +9,12 @@ const SOCKET_PORT: u16 = 53;
 pub struct DnsResolver {
     ip: Ipv4Addr,
     socket: UdpSocket,
-    port: u16,
 }
 
 impl DnsResolver {
     pub fn new(ip: Ipv4Addr, port: u16) -> Result<DnsResolver, Box<dyn Error>> {
         match UdpSocket::bind((Ipv4Addr::UNSPECIFIED, port)) {
-            Ok(socket) => Ok(DnsResolver { ip, socket, port }),
+            Ok(socket) => Ok(DnsResolver { ip, socket }),
             _ => panic!("Failed to bind socket! (ip: {}, port: {})", ip, port),
         }
     }

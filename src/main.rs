@@ -2,19 +2,32 @@ mod parser;
 mod resolver;
 
 use parser::DnsPacket;
-use std::{error::Error, fs::File, io::Read};
+use resolver::DnsResolver;
+use std::{error::Error, fs::File, io::Read, net::Ipv4Addr};
+
+const RESOLVER_PORT: u16 = 8000;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut filename = String::new();
+    print!("{}", resolve_query()?);
+    Ok(())
+}
 
-    let mut reader: Box<dyn Read> = if got_filename_from_args(&mut filename) {
+fn resolve_query() -> Result<DnsPacket, Box<dyn Error>> {
+    let resolver = DnsResolver::new(Ipv4Addr::new(8, 8, 8, 8), RESOLVER_PORT)?;
+    resolver.query(&mut decode_packet()?)
+}
+
+fn decode_packet() -> Result<DnsPacket, Box<dyn Error>> {
+    DnsPacket::from_reader(&mut get_packet_reader()?)
+}
+
+fn get_packet_reader() -> Result<Box<dyn Read>, Box<dyn Error>> {
+    let mut filename = String::new();
+    Ok(if got_filename_from_args(&mut filename) {
         Box::new(File::open(filename)?)
     } else {
         Box::new(std::io::stdin().lock())
-    };
-
-    print!("{}", DnsPacket::from_reader(&mut reader)?);
-    Ok(())
+    })
 }
 
 fn got_filename_from_args(filename: &mut String) -> bool {
