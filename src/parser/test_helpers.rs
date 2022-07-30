@@ -2,7 +2,7 @@ use super::wrapped_buffer::WrappedBuffer;
 use std::{error::Error, fs::File, io::Read};
 
 const TEST_DATA_DIR: &str = "test_data";
-pub const GOOGLE_QUERY: &str = "google_query.txt";
+pub const GOOGLE_QUERY: &str = "google_query_response.txt";
 pub const HEADER_LENGTH_BYTES: usize = 12;
 pub const RECORD_COUNT_SIZE_BYTES: usize = 2;
 
