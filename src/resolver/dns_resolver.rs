@@ -1,4 +1,4 @@
-use crate::parser::{DnsPacket, WrappedBuffer};
+use crate::parser::{DnsPacket, DnsQuestion, QueryType, ResultCode, WrappedBuffer};
 use std::{
     error::Error,
     net::{Ipv4Addr, UdpSocket},
@@ -19,13 +19,73 @@ impl DnsResolver {
         }
     }
 
-    pub fn query(&self, query: &mut DnsPacket) -> Result<DnsPacket, Box<dyn Error>> {
+    pub fn start_listening(&self) -> Result<(), Box<dyn Error>> {
+        loop {
+            self.answer_query()?;
+        }
+    }
+
+    fn answer_query(&self) -> Result<(), Box<dyn Error>> {
+        let mut query_buffer = WrappedBuffer::new();
+        let (_, address) = self.socket.recv_from(&mut query_buffer.as_slice()?)?;
+
+        let mut query = DnsPacket::from_buffer(&mut query_buffer)?;
+        let mut response = DnsPacket::new();
+        response.header.id = query.header.id;
+        response.header.num_questions = 1;
+        response.header.recursion_desired = true;
+        response.header.recursion_available = true;
+        response.header.response = true;
+
+        match query.questions.pop() {
+            Some(question) => match self.query(question.name.as_str(), question.query_type) {
+                Ok(downstream_result) => {
+                    response.questions.push(question);
+                    response.header.rescode = downstream_result.header.rescode;
+
+                    for answer in downstream_result.answers {
+                        response.answers.push(answer);
+                    }
+                    for record in downstream_result.authorities {
+                        response.authorities.push(record);
+                    }
+                    for record in downstream_result.additional_records {
+                        response.additional_records.push(record);
+                    }
+                }
+                // Got an error response from downstream.
+                _ => response.header.rescode = ResultCode::SERVFAIL,
+            },
+            // Incoming query packet contains no questions - must be malformed.
+            _ => response.header.rescode = ResultCode::FORMERR,
+        };
+
+        let mut response_buffer = WrappedBuffer::new();
+        response.write(&mut response_buffer)?;
+
+        let size = response_buffer.pos();
+        self.socket
+            .send_to(response_buffer.get_slice(0, size)?, address)?;
+
+        Ok(())
+    }
+
+    fn query(&self, name: &str, query_type: QueryType) -> Result<DnsPacket, Box<dyn Error>> {
         let mut query_buffer = WrappedBuffer::new();
         let mut response_buffer = WrappedBuffer::new();
-        query.write(&mut query_buffer)?;
+        let mut packet = DnsPacket::new();
+
+        packet.header.id = 0451;
+        packet.header.num_questions = 1;
+        packet.header.recursion_desired = true;
+        packet.questions.push(DnsQuestion {
+            name: name.to_string(),
+            query_type,
+        });
+        packet.write(&mut query_buffer)?;
 
         self.socket.send_to(
-            &query_buffer.get_slice(0, query_buffer.pos())?,
+            query_buffer.get_slice(0, query_buffer.pos())?,
             (self.ip, SOCKET_PORT),
         )?;
         self.socket.recv_from(&mut response_buffer.as_slice()?)?;
@@ -36,16 +96,14 @@ impl DnsResolver {
 #[cfg(test)]
 mod tests {
     use super::DnsResolver;
-    use crate::parser::{DnsPacket, DnsQuestion, DnsRecord, QueryType};
+    use crate::parser::{DnsPacket, DnsRecord, QueryType};
     use std::{error::Error, net::Ipv4Addr};
 
     #[test]
     fn can_answer_dns_query() -> Result<(), Box<dyn Error>> {
         let resolver = DnsResolver::new(Ipv4Addr::new(8, 8, 8, 8), 8000)?;
-
         let expected_domain = "google.com";
-        let mut query: DnsPacket = build_query_packet(expected_domain.to_string(), QueryType::A);
-        let response: DnsPacket = resolver.query(&mut query)?;
+        let response: DnsPacket = resolver.query(expected_domain, QueryType::A)?;
         let answers = response.answers;
 
         match answers.first() {
@@ -59,15 +117,5 @@ mod tests {
         };
 
         Ok(())
-    }
-
-    fn build_query_packet(name: String, query_type: QueryType) -> DnsPacket {
-        let mut query = DnsPacket::new();
-        query.header.id = 8541;
-        query.header.num_questions = 1;
-        query.header.recursion_desired = true;
-        query.questions.push(DnsQuestion { name, query_type });
-
-        query
     }
 }

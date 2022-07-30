@@ -19,7 +19,7 @@
 					"kind": "bin"
 				}
 			},
-			"args": ["test_data/google_query.txt"],
+			"args": [],
 			"cwd": "${workspaceFolder}"
 		},
 		{
