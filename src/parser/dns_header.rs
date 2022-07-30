@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use super::bitshifting::{get_flag, get_lsb, get_lsn, get_msb};
 use super::result_code::ResultCode;
 use super::wrapped_buffer::WrappedBuffer;
@@ -60,7 +62,7 @@ impl DnsHeader {
         }
     }
 
-    pub fn read(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
+    pub fn read(&mut self, buffer: &mut WrappedBuffer) -> Result<(), Box<dyn Error>> {
         self.read_id(buffer)?;
         self.read_flags(buffer)?;
         self.read_record_counts(buffer)?;

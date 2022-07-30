@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use super::wrapped_buffer::WrappedBuffer;
 use std::{error::Error, fs::File, io::Read};
 

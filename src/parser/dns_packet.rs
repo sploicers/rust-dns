@@ -1,4 +1,8 @@
-use std::{error::Error, fmt::Display, io::Read};
+use std::{
+    error::Error,
+    fmt::Display,
+    io::{Read, Write},
+};
 
 use super::{
     dns_header::DnsHeader, dns_question::DnsQuestion, dns_record::DnsRecord,
@@ -15,6 +19,7 @@ pub struct DnsPacket {
 }
 
 impl DnsPacket {
+    #[allow(dead_code)]
     pub fn new() -> DnsPacket {
         DnsPacket {
             header: DnsHeader::new(),
@@ -31,7 +36,7 @@ impl DnsPacket {
         Ok(DnsPacket::from_buffer(&mut buffer)?)
     }
 
-    pub fn from_buffer(buffer: &mut WrappedBuffer) -> Result<DnsPacket, String> {
+    pub fn from_buffer(buffer: &mut WrappedBuffer) -> Result<DnsPacket, Box<dyn Error>> {
         let mut packet = DnsPacket {
             header: DnsHeader::new(),
             questions: Vec::new(),
@@ -39,30 +44,55 @@ impl DnsPacket {
             authorities: Vec::new(),
             additional_records: Vec::new(),
         };
-        packet.header.read(buffer)?;
-
-        for _ in 0..packet.header.num_questions {
-            packet.questions.push(DnsQuestion::read(buffer)?);
-        }
-        for _ in 0..packet.header.num_answers {
-            packet.answers.push(DnsRecord::read(buffer)?);
-        }
-        for _ in 0..packet.header.num_authorities {
-            packet.authorities.push(DnsRecord::read(buffer)?);
-        }
-        for _ in 0..packet.header.num_additional {
-            packet.additional_records.push(DnsRecord::read(buffer)?);
-        }
+        packet.read_header(buffer)?;
+        packet.read_records(buffer)?;
         Ok(packet)
     }
 
     pub fn write(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
+        self.write_header(buffer)?;
+        self.write_records(buffer)?;
+        Ok(())
+    }
+
+    pub fn write_direct<T: Write>(&mut self, writer: &mut T) -> Result<(), Box<dyn Error>> {
+        let mut buffer = WrappedBuffer::new();
+        self.write_header(&mut buffer)?;
+        self.write_records(&mut buffer)?;
+        writer.write(&mut buffer.as_slice()?)?;
+        Ok(())
+    }
+
+    fn read_header(&mut self, buffer: &mut WrappedBuffer) -> Result<(), Box<dyn Error>> {
+        self.header.read(buffer)
+    }
+
+    fn write_header(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
         self.header.num_questions = self.questions.len() as u16;
         self.header.num_answers = self.answers.len() as u16;
         self.header.num_authorities = self.authorities.len() as u16;
         self.header.num_additional = self.additional_records.len() as u16;
         self.header.write(buffer)?;
+        Ok(())
+    }
 
+    fn read_records(&mut self, buffer: &mut WrappedBuffer) -> Result<(), Box<dyn Error>> {
+        for _ in 0..self.header.num_questions {
+            self.questions.push(DnsQuestion::read(buffer)?);
+        }
+        for _ in 0..self.header.num_answers {
+            self.answers.push(DnsRecord::read(buffer)?);
+        }
+        for _ in 0..self.header.num_authorities {
+            self.authorities.push(DnsRecord::read(buffer)?);
+        }
+        for _ in 0..self.header.num_additional {
+            self.additional_records.push(DnsRecord::read(buffer)?);
+        }
+        Ok(())
+    }
+
+    fn write_records(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
         for question in &self.questions {
             question.write(buffer)?;
         }
