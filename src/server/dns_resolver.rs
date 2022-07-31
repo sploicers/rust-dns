@@ -32,7 +32,8 @@ impl DnsResolver {
         response.header.response = true;
 
         match query.questions.pop() {
-            Some(question) => match self.query(question.name.as_str(), question.query_type) {
+            Some(question) => match DnsResolver::query(question.name.as_str(), question.query_type)
+            {
                 Ok(downstream_result) => {
                     response.questions.push(question);
                     response.header.rescode = downstream_result.header.rescode;
@@ -57,7 +58,7 @@ impl DnsResolver {
         Ok(())
     }
 
-    fn query(&mut self, name: &str, query_type: QueryType) -> Result<DnsPacket, Box<dyn Error>> {
+    fn query(name: &str, query_type: QueryType) -> Result<DnsPacket, Box<dyn Error>> {
         let remote_address = (REMOTE_SERVER_IP, REMOTE_SOCKET_PORT);
         let mut socket = WrappedSocket::new(LOCAL_SOCKET_PORT, remote_address.into());
 
@@ -83,9 +84,8 @@ mod tests {
 
     #[test]
     fn can_answer_dns_query() -> Result<(), Box<dyn Error>> {
-        let mut resolver = DnsResolver::new(8000)?;
         let expected_domain = "google.com";
-        let response: DnsPacket = resolver.query(expected_domain, QueryType::A)?;
+        let response: DnsPacket = DnsResolver::query(expected_domain, QueryType::A)?;
         let answers = response.answers;
 
         match answers.first() {

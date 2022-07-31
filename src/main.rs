@@ -1,7 +1,7 @@
 mod parser;
-mod resolver;
+mod server;
 
-use resolver::DnsResolver;
+use server::DnsResolver;
 use std::error::Error;
 
 const SERVER_PORT: u16 = 8000;
