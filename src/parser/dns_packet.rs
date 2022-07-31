@@ -1,4 +1,8 @@
-use std::{error::Error, fmt::Display, io::Read};
+use std::{
+    error::Error,
+    fmt::Display,
+    io::{Read, Write},
+};
 
 use super::{
     dns_header::DnsHeader, dns_question::DnsQuestion, dns_record::DnsRecord,
@@ -25,10 +29,33 @@ impl DnsPacket {
         }
     }
 
-    pub fn from_reader<T: Read>(reader: &mut T) -> Result<DnsPacket, Box<dyn Error>> {
+    pub fn read<T: Read>(reader: &mut T) -> Result<DnsPacket, Box<dyn Error>> {
         let mut buffer = WrappedBuffer::new();
         reader.read(&mut buffer.as_slice()?)?;
         Ok(DnsPacket::from_buffer(&mut buffer)?)
+    }
+
+    pub fn write<T: Write>(&mut self, writer: &mut T) -> Result<usize, Box<dyn Error>> {
+        let mut buffer = WrappedBuffer::new();
+        self.header.num_questions = self.questions.len() as u16;
+        self.header.num_answers = self.answers.len() as u16;
+        self.header.num_authorities = self.authorities.len() as u16;
+        self.header.num_additional = self.additional_records.len() as u16;
+        self.header.write(&mut buffer)?;
+
+        for question in &self.questions {
+            question.write(&mut buffer)?;
+        }
+        for record in &self.answers {
+            record.write(&mut buffer)?;
+        }
+        for record in &self.authorities {
+            record.write(&mut buffer)?;
+        }
+        for record in &self.additional_records {
+            record.write(&mut buffer)?;
+        }
+        Ok(writer.write(buffer.as_slice()?)?)
     }
 
     pub fn from_buffer(buffer: &mut WrappedBuffer) -> Result<DnsPacket, String> {
@@ -54,28 +81,6 @@ impl DnsPacket {
             packet.additional_records.push(DnsRecord::read(buffer)?);
         }
         Ok(packet)
-    }
-
-    pub fn write(&mut self, buffer: &mut WrappedBuffer) -> Result<(), String> {
-        self.header.num_questions = self.questions.len() as u16;
-        self.header.num_answers = self.answers.len() as u16;
-        self.header.num_authorities = self.authorities.len() as u16;
-        self.header.num_additional = self.additional_records.len() as u16;
-        self.header.write(buffer)?;
-
-        for question in &self.questions {
-            question.write(buffer)?;
-        }
-        for record in &self.answers {
-            record.write(buffer)?;
-        }
-        for record in &self.authorities {
-            record.write(buffer)?;
-        }
-        for record in &self.additional_records {
-            record.write(buffer)?;
-        }
-        Ok(())
     }
 }
 

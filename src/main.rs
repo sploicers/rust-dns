@@ -2,12 +2,12 @@ mod parser;
 mod resolver;
 
 use resolver::DnsResolver;
-use std::{error::Error, net::Ipv4Addr};
+use std::error::Error;
 
-const RESOLVER_PORT: u16 = 8000;
+const SERVER_PORT: u16 = 8000;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let resolver = DnsResolver::new(Ipv4Addr::new(8, 8, 8, 8), RESOLVER_PORT)?;
+    let mut resolver = DnsResolver::new(SERVER_PORT)?;
     resolver.start_listening()?;
     Ok(())
 }

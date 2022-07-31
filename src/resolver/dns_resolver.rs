@@ -1,35 +1,29 @@
-use crate::parser::{DnsPacket, DnsQuestion, QueryType, ResultCode, WrappedBuffer};
-use std::{
-    error::Error,
-    net::{Ipv4Addr, UdpSocket},
-};
+use super::wrapped_socket::WrappedSocket;
+use crate::parser::{DnsPacket, DnsQuestion, QueryType, ResultCode};
+use std::{error::Error, net::Ipv4Addr};
 
-const SOCKET_PORT: u16 = 53;
+const REMOTE_SOCKET_PORT: u16 = 53;
+const LOCAL_SOCKET_PORT: u16 = 4000;
+const REMOTE_SERVER_IP: Ipv4Addr = Ipv4Addr::new(8, 8, 8, 8);
 
 pub struct DnsResolver {
-    ip: Ipv4Addr,
-    socket: UdpSocket,
+    socket: WrappedSocket,
 }
 
 impl DnsResolver {
-    pub fn new(ip: Ipv4Addr, port: u16) -> Result<DnsResolver, Box<dyn Error>> {
-        match UdpSocket::bind((Ipv4Addr::UNSPECIFIED, port)) {
-            Ok(socket) => Ok(DnsResolver { ip, socket }),
-            _ => panic!("Failed to bind socket! (ip: {}, port: {})", ip, port),
-        }
+    pub fn new(port: u16) -> Result<DnsResolver, Box<dyn Error>> {
+        let socket = WrappedSocket::new(port, (Ipv4Addr::UNSPECIFIED, port).into());
+        Ok(DnsResolver { socket })
     }
 
-    pub fn start_listening(&self) -> Result<(), Box<dyn Error>> {
+    pub fn start_listening(&mut self) -> Result<(), Box<dyn Error>> {
         loop {
             self.answer_query()?;
         }
     }
 
-    fn answer_query(&self) -> Result<(), Box<dyn Error>> {
-        let mut query_buffer = WrappedBuffer::new();
-        let (_, address) = self.socket.recv_from(&mut query_buffer.as_slice()?)?;
-
-        let mut query = DnsPacket::from_buffer(&mut query_buffer)?;
+    fn answer_query(&mut self) -> Result<(), Box<dyn Error>> {
+        let mut query = DnsPacket::read(&mut self.socket)?;
         let mut response = DnsPacket::new();
         response.header.id = query.header.id;
         response.header.num_questions = 1;
@@ -56,40 +50,28 @@ impl DnsResolver {
                 // Got an error response from downstream.
                 _ => response.header.rescode = ResultCode::SERVFAIL,
             },
-            // Incoming query packet contains no questions - must be malformed.
+            // Incoming query packet is malformed (contains no question records).
             _ => response.header.rescode = ResultCode::FORMERR,
         };
-
-        let mut response_buffer = WrappedBuffer::new();
-        response.write(&mut response_buffer)?;
-
-        let size = response_buffer.pos();
-        self.socket
-            .send_to(response_buffer.get_slice(0, size)?, address)?;
-
+        response.write(&mut self.socket)?;
         Ok(())
     }
 
-    fn query(&self, name: &str, query_type: QueryType) -> Result<DnsPacket, Box<dyn Error>> {
-        let mut query_buffer = WrappedBuffer::new();
-        let mut response_buffer = WrappedBuffer::new();
-        let mut packet = DnsPacket::new();
+    fn query(&mut self, name: &str, query_type: QueryType) -> Result<DnsPacket, Box<dyn Error>> {
+        let remote_address = (REMOTE_SERVER_IP, REMOTE_SOCKET_PORT);
+        let mut socket = WrappedSocket::new(LOCAL_SOCKET_PORT, remote_address.into());
 
-        packet.header.id = 0451;
+        let mut packet = DnsPacket::new();
+        packet.header.id = 451;
         packet.header.num_questions = 1;
         packet.header.recursion_desired = true;
         packet.questions.push(DnsQuestion {
             name: name.to_string(),
             query_type,
         });
-        packet.write(&mut query_buffer)?;
 
-        self.socket.send_to(
-            query_buffer.get_slice(0, query_buffer.pos())?,
-            (self.ip, SOCKET_PORT),
-        )?;
-        self.socket.recv_from(&mut response_buffer.as_slice()?)?;
-        Ok(DnsPacket::from_buffer(&mut response_buffer)?)
+        packet.write(&mut socket)?;
+        Ok(DnsPacket::read(&mut socket)?)
     }
 }
 
@@ -97,11 +79,11 @@ impl DnsResolver {
 mod tests {
     use super::DnsResolver;
     use crate::parser::{DnsPacket, DnsRecord, QueryType};
-    use std::{error::Error, net::Ipv4Addr};
+    use std::error::Error;
 
     #[test]
     fn can_answer_dns_query() -> Result<(), Box<dyn Error>> {
-        let resolver = DnsResolver::new(Ipv4Addr::new(8, 8, 8, 8), 8000)?;
+        let mut resolver = DnsResolver::new(8000)?;
         let expected_domain = "google.com";
         let response: DnsPacket = resolver.query(expected_domain, QueryType::A)?;
         let answers = response.answers;
