@@ -55,7 +55,7 @@ impl DnsPacket {
         for record in &self.additional_records {
             record.write(&mut buffer)?;
         }
-        Ok(writer.write(buffer.as_slice()?)?)
+        Ok(writer.write(buffer.get_slice(0, buffer.pos())?)?)
     }
 
     pub fn from_buffer(buffer: &mut WrappedBuffer) -> Result<DnsPacket, String> {
