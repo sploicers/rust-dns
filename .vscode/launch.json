@@ -11,11 +11,11 @@
 			"cargo": {
 				"args": [
 					"build",
-					"--bin=dns_server_tutorial_rust",
-					"--package=dns_server_tutorial_rust"
+					"--bin=rust-dns",
+					"--package=rust-dns"
 				],
 				"filter": {
-					"name": "dns_server_tutorial_rust",
+					"name": "rust-dns",
 					"kind": "bin"
 				}
 			},
@@ -30,11 +30,11 @@
 				"args": [
 					"test",
 					"--no-run",
-					"--bin=dns_server_tutorial_rust",
-					"--package=dns_server_tutorial_rust"
+					"--bin=rust-dns",
+					"--package=rust-dns"
 				],
 				"filter": {
-					"name": "dns_server_tutorial_rust",
+					"name": "rust-dns",
 					"kind": "bin"
 				}
 			},
