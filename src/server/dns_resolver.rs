@@ -1,3 +1,5 @@
+use log::info;
+
 use super::wrapped_socket::WrappedSocket;
 use crate::parser::{DnsPacket, DnsQuestion, QueryType, ResultCode};
 use std::{error::Error, net::Ipv4Addr};
@@ -23,7 +25,10 @@ impl DnsResolver {
     }
 
     fn answer_query(&mut self) -> Result<(), Box<dyn Error>> {
+        info!("Waiting to receive a query...");
         let mut query = DnsPacket::read(&mut self.socket)?;
+        info!("Received query:\n{}", query);
+
         let mut response = DnsPacket::new();
         response.header.id = query.header.id;
         response.header.num_questions = 1;
