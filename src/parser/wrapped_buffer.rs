@@ -24,14 +24,6 @@ impl WrappedBuffer {
         Ok(result)
     }
 
-    pub fn read_u16(&mut self) -> Result<u16, String> {
-        Ok((self.read_u8()? as u16) << 8 | self.read_u8()? as u16)
-    }
-
-    pub fn read_u32(&mut self) -> Result<u32, String> {
-        Ok((self.read_u16()? as u32) << 16 | self.read_u16()? as u32)
-    }
-
     pub fn write_u8(&mut self, value: u8) -> Result<(), String> {
         if self.position >= BUFFER_SIZE {
             return Err("End of buffer!".into());
@@ -41,10 +33,18 @@ impl WrappedBuffer {
         Ok(())
     }
 
+    pub fn read_u16(&mut self) -> Result<u16, String> {
+        Ok((self.read_u8()? as u16) << 8 | self.read_u8()? as u16)
+    }
+
     pub fn write_u16(&mut self, value: u16) -> Result<(), String> {
         self.write_u8(get_msb(value))?;
         self.write_u8(get_lsb(value))?;
         Ok(())
+    }
+
+    pub fn read_u32(&mut self) -> Result<u32, String> {
+        Ok((self.read_u16()? as u32) << 16 | self.read_u16()? as u32)
     }
 
     pub fn write_u32(&mut self, value: u32) -> Result<(), String> {
