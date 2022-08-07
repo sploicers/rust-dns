@@ -1,18 +1,12 @@
-use super::wrapped_socket::WrappedSocket;
+use super::socket::{LocalSocket, RemoteSocket};
 use crate::parser::{DnsPacket, DnsQuestion, QueryType, ResultCode};
 use std::{
     error::Error,
     net::{Ipv4Addr, SocketAddr},
 };
 
-const REMOTE_SERVER_IP: Ipv4Addr = Ipv4Addr::new(8, 8, 8, 8); // Still just forward queries to Google's DNS resolver for now.
-const REMOTE_SOCKET_PORT: u16 = 53;
-const LOCAL_SOCKET_PORT: u16 = 4000;
-
 pub fn start_listening(port: u16) -> Result<(), Box<dyn Error>> {
-    let local_addr: SocketAddr = (Ipv4Addr::UNSPECIFIED, port).into();
-    let remote_addr: SocketAddr = (Ipv4Addr::UNSPECIFIED, REMOTE_SOCKET_PORT).into();
-    let mut socket = WrappedSocket::new(local_addr, remote_addr);
+    let mut socket = LocalSocket::bind((Ipv4Addr::UNSPECIFIED, port).into());
 
     log::info!("Server listening on port {}.", port);
     loop {
@@ -20,9 +14,9 @@ pub fn start_listening(port: u16) -> Result<(), Box<dyn Error>> {
     }
 }
 
-fn answer_query(socket: &mut WrappedSocket) -> Result<(), Box<dyn Error>> {
+fn answer_query(socket: &mut LocalSocket) -> Result<(), Box<dyn Error>> {
     log::info!("Waiting to receive a query...");
-    let mut query = DnsPacket::read(socket)?;
+    let query = DnsPacket::read(socket)?; // This blocks until some bytes can be read from the socket.
     log::info!("Received query:\n{}", query);
 
     let mut response = DnsPacket::new();
@@ -32,10 +26,10 @@ fn answer_query(socket: &mut WrappedSocket) -> Result<(), Box<dyn Error>> {
     response.header.recursion_available = true;
     response.header.response = true;
 
-    match query.questions.pop() {
+    match query.questions.first() {
         Some(question) => match resolve_name(question.name.as_str(), question.query_type) {
             Ok(downstream_result) => {
-                response.questions.push(question);
+                response.questions.push(question.to_owned());
                 response.header.rescode = downstream_result.header.rescode;
 
                 for answer in downstream_result.answers {
@@ -60,9 +54,12 @@ fn answer_query(socket: &mut WrappedSocket) -> Result<(), Box<dyn Error>> {
 }
 
 fn resolve_name(name: &str, query_type: QueryType) -> Result<DnsPacket, Box<dyn Error>> {
-    let local_addr = (Ipv4Addr::UNSPECIFIED, LOCAL_SOCKET_PORT);
-    let remote_addr = (REMOTE_SERVER_IP, REMOTE_SOCKET_PORT);
-    let mut socket = WrappedSocket::new(local_addr.into(), remote_addr.into());
+    let local_socket_port = 4000;
+    let local_addr: SocketAddr = (Ipv4Addr::UNSPECIFIED, local_socket_port).into();
+    // Still just forward requests to Google's DNS for now:
+    let remote_addr: SocketAddr = (Ipv4Addr::new(8, 8, 8, 8), 53).into();
+
+    let mut socket = RemoteSocket::bind(local_addr, remote_addr);
     let mut packet = DnsPacket::new();
 
     packet.header.id = 451;
@@ -74,8 +71,8 @@ fn resolve_name(name: &str, query_type: QueryType) -> Result<DnsPacket, Box<dyn 
         query_type,
     });
 
-    packet.write(&mut socket)?;
-    Ok(DnsPacket::read(&mut socket)?)
+    packet.write(&mut socket)?; // Send query downstream.
+    Ok(DnsPacket::read(&mut socket)?) // Read response from downstream.
 }
 
 #[cfg(test)]

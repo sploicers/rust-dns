@@ -1,4 +1,4 @@
 mod dns_resolver;
-mod wrapped_socket;
+mod socket;
 
 pub use dns_resolver::start_listening;
